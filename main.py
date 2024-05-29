@@ -34,27 +34,37 @@ visualization_keywords = ["visualize", "plot", "graph", "chart", "draw", "diagra
 class ChatRequest(BaseModel):
     prompt: str
 
-@app.post("/upload_csv/")
-async def upload_csv(file: UploadFile = File(...)):
+@app.post("/upload_file/")
+async def upload_file(file: UploadFile = File(...)):
     global last_uploaded_file_path
     try:
         if not os.path.exists(UPLOAD_DIR):
             os.makedirs(UPLOAD_DIR)
-        file_path = os.path.join(UPLOAD_DIR, "last_uploaded.csv")
+        file_ext = os.path.splitext(file.filename)[1].lower()
+        if file_ext not in [".csv", ".xlsx"]:
+            raise HTTPException(status_code=400, detail="Unsupported file type")
+        
+        file_path = os.path.join(UPLOAD_DIR, f"last_uploaded{file_ext}")
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
-        last_uploaded_file_path = file_path
+        
+        if file_ext == ".xlsx":
+            csv_file_path = convert_excel_to_csv(file_path)
+            last_uploaded_file_path = csv_file_path
+        else:
+            last_uploaded_file_path = file_path
+            
         return JSONResponse(content={"message": "File uploaded successfully"})
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/chat_with_csv/")
-async def chat_with_csv_endpoint(chat_request: ChatRequest):
+@app.post("/chat_with_file/")
+async def chat_with_file_endpoint(chat_request: ChatRequest):
     global last_uploaded_file_path
     try:
         if last_uploaded_file_path is None or not os.path.exists(last_uploaded_file_path):
-            raise HTTPException(status_code=400, detail="No CSV file has been uploaded yet")
+            raise HTTPException(status_code=400, detail="No file has been uploaded yet")
             
         result = chat_with_agent(chat_request.prompt, last_uploaded_file_path)
         
@@ -69,10 +79,20 @@ async def chat_with_csv_endpoint(chat_request: ChatRequest):
         return {"error": str(e)}
 
 
+def convert_excel_to_csv(excel_file_path):
+    try:
+        df = pd.read_excel(excel_file_path)
+        csv_file_path = os.path.splitext(excel_file_path)[0] + ".csv"
+        df.to_csv(csv_file_path, index=False)
+        return csv_file_path
+    except Exception as e:
+        raise ValueError(f"Error converting Excel to CSV: {str(e)}")
+
 def chat_with_agent(input_string, file_path):
     try:
+        # Assuming file_path is always CSV after conversion
         df = pd.read_csv(file_path)
-        
+
         agent = create_csv_agent(
             ChatOpenAI(temperature=0, model="gpt-4o"),
             file_path,
