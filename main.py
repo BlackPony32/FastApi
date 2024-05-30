@@ -8,6 +8,8 @@ import json
 from typing import List, Optional
 from tempfile import NamedTemporaryFile
 import shutil
+import requests
+import logging
 
 from langchain_openai import ChatOpenAI
 from langchain.agents import AgentExecutor
@@ -25,7 +27,7 @@ load_dotenv()
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-# Global variable to store the path of the last uploaded file
+# Global variable to store the path of the last uploaded/downloaded file
 last_uploaded_file_path = None
 
 # List of synonyms for the word "visualize"
@@ -33,6 +35,10 @@ visualization_keywords = ["visualize", "plot", "graph", "chart", "draw", "diagra
 
 class ChatRequest(BaseModel):
     prompt: str
+
+class DownloadRequest(BaseModel):
+    url: str
+    filename: Optional[str] = None
 
 @app.post("/upload_file/")
 async def upload_file(file: UploadFile = File(...)):
@@ -58,13 +64,62 @@ async def upload_file(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/download")
+def download_file(request: DownloadRequest):
+    global last_uploaded_file_path
+    url = request.url
+
+    try:
+        # Log the URL for debugging
+        logging.info(f"Downloading file from URL: {url}")
+
+        # Validate the URL
+        if not url.startswith(('http://', 'https://')):
+            raise HTTPException(status_code=400, detail=f"Invalid URL: {url}")
+
+        response = requests.get(url, stream=True)
+        response.raise_for_status()
+
+        # Determine the MIME type
+        mime_type = response.headers.get('Content-Type')
+        if mime_type not in ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'text/csv']:
+            raise HTTPException(status_code=400, detail="Unsupported file type")
+
+        # Determine the file extension based on MIME type
+        if mime_type == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+            file_ext = '.xlsx'
+        elif mime_type == 'text/csv':
+            file_ext = '.csv'
+        else:
+            raise HTTPException(status_code=400, detail="Unsupported file type")
+
+        # Save the file
+        file_path = os.path.join(UPLOAD_DIR, f"last_uploaded{file_ext}")
+        with open(file_path, "wb") as file:
+            for chunk in response.iter_content(chunk_size=8192):
+                file.write(chunk)
+
+        # Convert Excel to CSV if necessary
+        if file_ext == '.xlsx':
+            csv_file_path = convert_excel_to_csv(file_path)
+            last_uploaded_file_path = csv_file_path
+        else:
+            last_uploaded_file_path = file_path
+
+        return {"message": "File downloaded successfully", "filename": f"last_uploaded{file_ext}"}
+    except requests.exceptions.RequestException as e:
+        logging.error(f"RequestException: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Error downloading file: {e}")
+    except Exception as e:
+        logging.error(f"Exception: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {e}")
 
 @app.post("/chat_with_file/")
 async def chat_with_file_endpoint(chat_request: ChatRequest):
     global last_uploaded_file_path
     try:
         if last_uploaded_file_path is None or not os.path.exists(last_uploaded_file_path):
-            raise HTTPException(status_code=400, detail="No file has been uploaded yet")
+            raise HTTPException(status_code=400, detail="No file has been uploaded or downloaded yet")
             
         result = chat_with_agent(chat_request.prompt, last_uploaded_file_path)
         
@@ -77,7 +132,6 @@ async def chat_with_file_endpoint(chat_request: ChatRequest):
         return {"error": f"ValueError: {str(e)}"}
     except Exception as e:
         return {"error": str(e)}
-
 
 def convert_excel_to_csv(excel_file_path):
     try:
@@ -127,7 +181,6 @@ def cleanup_uploads_folder():
 @app.on_event("shutdown")
 def shutdown_event():
     cleanup_uploads_folder()
-
 
 if __name__ == "__main__":
     import uvicorn
