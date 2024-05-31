@@ -14,3 +14,5 @@ python-multipart
 uvicorn
 tabulate
 openpyxl
+streamlit
+plotly

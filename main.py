@@ -10,7 +10,7 @@ from tempfile import NamedTemporaryFile
 import shutil
 import requests
 import logging
-
+import streamlit as st
 from langchain_openai import ChatOpenAI
 from langchain.agents import AgentExecutor
 from langchain_experimental.agents.agent_toolkits import create_csv_agent
@@ -20,7 +20,7 @@ from langchain.agents.format_scratchpad import format_to_openai_function_message
 from langchain.agents.output_parsers import OpenAIFunctionsAgentOutputParser
 from langchain.agents.agent_types import AgentType
 from langchain.tools import tool
-
+from app import main_viz
 app = FastAPI()
 load_dotenv()
 
