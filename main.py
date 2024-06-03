@@ -9,6 +9,8 @@ from typing import List, Optional
 from tempfile import NamedTemporaryFile
 import shutil
 import requests
+from pathlib import Path
+from typing import List, Union
 import logging
 import streamlit as st
 from langchain_openai import ChatOpenAI
@@ -21,6 +23,8 @@ from langchain.agents.output_parsers import OpenAIFunctionsAgentOutputParser
 from langchain.agents.agent_types import AgentType
 from langchain.tools import tool
 from app import main_viz
+from side_func import extract_filename
+
 app = FastAPI()
 load_dotenv()
 
@@ -64,55 +68,48 @@ async def upload_file(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
+
 @app.post("/download")
 def download_file(request: DownloadRequest):
-    global last_uploaded_file_path
     url = request.url
-
+    file_name = extract_filename(url)
     try:
-        # Log the URL for debugging
         logging.info(f"Downloading file from URL: {url}")
 
-        # Validate the URL
         if not url.startswith(('http://', 'https://')):
-            raise HTTPException(status_code=400, detail=f"Invalid URL: {url}")
+            raise HTTPException(status_code=400, detail="Invalid URL")
 
         response = requests.get(url, stream=True)
         response.raise_for_status()
 
-        # Determine the MIME type
         mime_type = response.headers.get('Content-Type')
-        if mime_type not in ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'text/csv']:
+        if mime_type != 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
             raise HTTPException(status_code=400, detail="Unsupported file type")
 
-        # Determine the file extension based on MIME type
-        if mime_type == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
-            file_ext = '.xlsx'
-        elif mime_type == 'text/csv':
-            file_ext = '.csv'
-        else:
-            raise HTTPException(status_code=400, detail="Unsupported file type")
-
-        # Save the file
-        file_path = os.path.join(UPLOAD_DIR, f"last_uploaded{file_ext}")
-        with open(file_path, "wb") as file:
+        excel_file_path = os.path.join(UPLOAD_DIR, f"{file_name}.xlsx")
+        with open(excel_file_path, "wb") as file:
             for chunk in response.iter_content(chunk_size=8192):
                 file.write(chunk)
 
-        # Convert Excel to CSV if necessary
-        if file_ext == '.xlsx':
-            csv_file_path = convert_excel_to_csv(file_path)
-            last_uploaded_file_path = csv_file_path
-        else:
-            last_uploaded_file_path = file_path
+        csv_file_path = convert_excel_to_csv(excel_file_path)
 
-        return {"message": "File downloaded successfully", "filename": f"last_uploaded{file_ext}"}
+        streamlit_url = "http://localhost:8501"  # URL where the Streamlit app will be running
+        return {"message": "File downloaded and converted successfully", "streamlit_url": streamlit_url}
+
     except requests.exceptions.RequestException as e:
         logging.error(f"RequestException: {str(e)}")
         raise HTTPException(status_code=400, detail=f"Error downloading file: {e}")
     except Exception as e:
         logging.error(f"Exception: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {e}")
+
+@app.get("/files/{file_name}")
+def get_file(file_name: str):
+    file_path = os.path.join(UPLOAD_DIR, file_name)
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(file_path)
 
 @app.post("/chat_with_file/")
 async def chat_with_file_endpoint(chat_request: ChatRequest):
@@ -133,14 +130,22 @@ async def chat_with_file_endpoint(chat_request: ChatRequest):
     except Exception as e:
         return {"error": str(e)}
 
+
 def convert_excel_to_csv(excel_file_path):
+    #cleanup_uploads_folder()
     try:
+        # Read the Excel file
         df = pd.read_excel(excel_file_path)
+        # Generate the CSV file path
         csv_file_path = os.path.splitext(excel_file_path)[0] + ".csv"
+        # Write the data to a CSV file
         df.to_csv(csv_file_path, index=False)
+        # Delete the original Excel file
+        os.remove(excel_file_path)
         return csv_file_path
     except Exception as e:
         raise ValueError(f"Error converting Excel to CSV: {str(e)}")
+
 
 def chat_with_agent(input_string, file_path):
     try:
