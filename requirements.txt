@@ -16,3 +16,4 @@ tabulate
 openpyxl
 streamlit
 plotly
+statsmodels 
