@@ -7,15 +7,19 @@ from visualizations import (
     reps_details_viz, reps_summary_viz, skus_not_ordered_viz,
     low_stock_inventory_viz, current_inventory_viz, top_customers_viz, customer_details_viz
 )
-from side_func import identify_file
-
+from side_func import identify_file, get_file_name
+#from main import file_name
 
 st.set_page_config(layout="wide")
 
 UPLOAD_DIR = "uploads"
 if not os.path.exists(UPLOAD_DIR):
     os.makedirs(UPLOAD_DIR)
-last_uploaded_file_path = os.path.join(UPLOAD_DIR, "last_uploaded.csv")
+
+
+file_name = get_file_name()
+last_uploaded_file_path = os.path.join(UPLOAD_DIR, file_name)
+
 
 async def read_csv(file_path):
     loop = asyncio.get_event_loop()
@@ -28,6 +32,8 @@ async def chat_with_csv(df, prompt):
     return result
 
 async def main_viz():
+    st.title("Excel Report Analysis")
+
     if os.path.exists(last_uploaded_file_path):
         st.success("File is available for visualization.")
         df = pd.read_csv(last_uploaded_file_path)
@@ -45,7 +51,6 @@ async def main_viz():
                     st.info("Your Query: " + input_text)
                     result =await chat_with_csv(df, input_text)
                     st.success(result)
-    
         if file_type == "3rd Party Sales Summary report":
             cc1, cc2 = st.columns([1,1])
 
@@ -147,7 +152,6 @@ async def main_viz():
             with cc2:
                 current_inventory_viz.df_analyze_inventory_value_per_unit(df)
                 current_inventory_viz.df_compare_average_retail_prices(df)
-
         elif file_type == "Top Customers report":
             cc1, cc2 = st.columns([1,1])
             with cc1:
@@ -157,7 +161,6 @@ async def main_viz():
             with cc2:
                 top_customers_viz.create_non_zero_sales_grouped_plot(df)
                 top_customers_viz.interactive_group_distribution_app(df)
-
         elif file_type == "Customer Details report":
             cc1, cc2 = st.columns([1,1])
             with cc1:
