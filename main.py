@@ -23,16 +23,16 @@ from langchain.agents.output_parsers import OpenAIFunctionsAgentOutputParser
 from langchain.agents.agent_types import AgentType
 from langchain.tools import tool
 from app import main_viz
-from side_func import extract_filename
+from side_func import extract_filename, get_file_name
 
 app = FastAPI()
 load_dotenv()
 
+UPLOAD_DIR_MANY = "uploads_many"
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-# Global variable to store the path of the last uploaded/downloaded file
-last_uploaded_file_path = None
+
 
 # List of synonyms for the word "visualize"
 visualization_keywords = ["visualize", "plot", "graph", "chart", "draw", "diagram", "display"]
@@ -43,6 +43,34 @@ class ChatRequest(BaseModel):
 class DownloadRequest(BaseModel):
     url: str
     filename: Optional[str] = None
+
+@app.post("/upload_many_file/")
+async def upload_many_file(files: list[UploadFile] = File(...)):
+    global last_uploaded_file_paths
+    last_uploaded_file_paths = []  # Reset the list for each new request
+
+    try:
+        if not os.path.exists(UPLOAD_DIR_MANY):
+            os.makedirs(UPLOAD_DIR_MANY)
+        
+        for file in files:
+            file_ext = os.path.splitext(file.filename)[1].lower()
+            if file_ext not in [".csv", ".xlsx"]:
+                raise HTTPException(status_code=400, detail=f"Unsupported file type: {file.filename}")
+            
+            file_path = os.path.join(UPLOAD_DIR_MANY, file.filename)
+            with open(file_path, "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
+            
+            if file_ext == ".xlsx":
+                csv_file_path = convert_excel_to_csv(file_path)
+                last_uploaded_file_paths.append(csv_file_path)
+            else:
+                last_uploaded_file_paths.append(file_path)
+        streamlit_url = "http://localhost:8501"  # URL where the Streamlit app will be running
+        return JSONResponse(content={"message": "Files uploaded successfully", "file_paths": last_uploaded_file_paths, "streamlit_url": streamlit_url})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/upload_file/")
 async def upload_file(file: UploadFile = File(...)):
@@ -69,9 +97,9 @@ async def upload_file(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-
 @app.post("/download")
 def download_file(request: DownloadRequest):
+    cleanup_uploads_folder()
     url = request.url
     file_name = extract_filename(url)
     try:
@@ -114,9 +142,11 @@ def get_file(file_name: str):
 @app.post("/chat_with_file/")
 async def chat_with_file_endpoint(chat_request: ChatRequest):
     global last_uploaded_file_path
+    file_name = get_file_name()
+    last_uploaded_file_path = os.path.join(UPLOAD_DIR, file_name)
     try:
         if last_uploaded_file_path is None or not os.path.exists(last_uploaded_file_path):
-            raise HTTPException(status_code=400, detail="No file has been uploaded or downloaded yet")
+            raise HTTPException(status_code=400, detail=f"No file has been uploaded or downloaded yet {last_uploaded_file_path}")
             
         result = chat_with_agent(chat_request.prompt, last_uploaded_file_path)
         
@@ -130,30 +160,13 @@ async def chat_with_file_endpoint(chat_request: ChatRequest):
     except Exception as e:
         return {"error": str(e)}
 
-
-def convert_excel_to_csv(excel_file_path):
-    #cleanup_uploads_folder()
-    try:
-        # Read the Excel file
-        df = pd.read_excel(excel_file_path)
-        # Generate the CSV file path
-        csv_file_path = os.path.splitext(excel_file_path)[0] + ".csv"
-        # Write the data to a CSV file
-        df.to_csv(csv_file_path, index=False)
-        # Delete the original Excel file
-        os.remove(excel_file_path)
-        return csv_file_path
-    except Exception as e:
-        raise ValueError(f"Error converting Excel to CSV: {str(e)}")
-
-
 def chat_with_agent(input_string, file_path):
     try:
         # Assuming file_path is always CSV after conversion
         df = pd.read_csv(file_path)
 
         agent = create_csv_agent(
-            ChatOpenAI(temperature=0, model="gpt-4o"),
+            ChatOpenAI(temperature=0, model="gpt-3.5-turbo"),
             file_path,
             verbose=True,
             agent_type=AgentType.OPENAI_FUNCTIONS
@@ -173,6 +186,21 @@ def chat_with_agent(input_string, file_path):
         raise ValueError("Parsing error occurred: " + str(e))
     except Exception as e:
         raise ValueError(f"An error occurred: {str(e)}")
+
+def convert_excel_to_csv(excel_file_path):
+    #cleanup_uploads_folder()
+    try:
+        # Read the Excel file
+        df = pd.read_excel(excel_file_path)
+        # Generate the CSV file path
+        csv_file_path = os.path.splitext(excel_file_path)[0] + ".csv"
+        # Write the data to a CSV file
+        df.to_csv(csv_file_path, index=False)
+        # Delete the original Excel file
+        os.remove(excel_file_path)
+        return csv_file_path
+    except Exception as e:
+        raise ValueError(f"Error converting Excel to CSV: {str(e)}")
 
 def cleanup_uploads_folder():
     try:

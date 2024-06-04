@@ -13,7 +13,7 @@ def get_file_name():
         f for f in os.listdir(UPLOAD_DIR) if os.path.isfile(os.path.join(UPLOAD_DIR, f))
     ]
     try:
-        return file_name[0]  #Current_inventory_15.csv
+        return file_name[0]
     except Exception as e:
         return "Invalid File"
 
