@@ -5,6 +5,32 @@ import numpy as np
 from plotly.colors import sequential
 from plotly.colors import qualitative
 
+def preprocess_data(data):
+    """
+    Data preprocessing: data type conversion and cleaning.
+
+    Args:
+        data: A Pandas DataFrame with the source data.
+
+    Returns:
+        Pandas DataFrame with the processed data.
+    """
+
+    # Identify numeric columns automatically
+    numeric_cols = data.select_dtypes(include=np.number).columns
+
+    # Process numeric columns
+    for col in numeric_cols:
+        # Check for missing values (NaN)
+        if np.isnan(data[col]).any():
+            # Fill missing values with 0 (you can choose another strategy)
+            data[col].fillna(0, inplace=True)
+            print(f"Warning: Column '{col}' contains missing values (NaN). Filled with 0.")
+
+    # Remove currency symbols and thousands separators
+    data[numeric_cols] = data[numeric_cols].replace('[$,]', '', regex=True).astype(float)
+
+    return data
 #Analyzes and visualizes the total inventory value by category
 def df_analyze_inventory_value_by_category(df):
     if df['Wholesale price'].dtype == 'object':

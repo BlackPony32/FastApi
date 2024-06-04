@@ -4,35 +4,31 @@ import plotly.express as px
 import numpy as np
 
 def preprocess_data(data):
-  """
-  Data preprocessing: data type conversion and cleaning.
+    """
+    Data preprocessing: data type conversion and cleaning.
 
-  Args:
-    data: A Pandas DataFrame with the source data.
+    Args:
+        data: A Pandas DataFrame with the source data.
 
-  Returns:
-    Pandas DataFrame with the processed data.
-  """
-  # Convert creation date to datetime type
-  data['Created at'] = pd.to_datetime(data['Created at'])
+    Returns:
+        Pandas DataFrame with the processed data.
+    """
 
-  # Remove currency symbols and thousands separators from numeric columns
-  numeric_cols = ['Grand total', 'Balance', 'Paid', 'Item specific discount',
-                  'Manufacturer specific discount', 'Total invoice discount',
-                  'Customer discount']
-  for col in numeric_cols:
-    # Check if the column contains text values
-    if data[col].dtype == 'object':
-      # Replace missing values with an empty string to avoid errors
-      data[col] = data[col].fillna('')
-      # Remove characters and convert to numbers
-      data[col] = data[col].str.replace('[$,]', '', regex=True).astype(float)
-    else:
-      # If the column is already numeric, check for missing values
-      if np.isnan(data[col]).any():
-        print(f"Warning: Column '{col}'contains missing values (NaN). ")
+    # Identify numeric columns automatically
+    numeric_cols = data.select_dtypes(include=np.number).columns
 
-  return data
+    # Process numeric columns
+    for col in numeric_cols:
+        # Check for missing values (NaN)
+        if np.isnan(data[col]).any():
+            # Fill missing values with 0 (you can choose another strategy)
+            data[col].fillna(0, inplace=True)
+            print(f"Warning: Column '{col}' contains missing values (NaN). Filled with 0.")
+
+    # Remove currency symbols and thousands separators
+    data[numeric_cols] = data[numeric_cols].replace('[$,]', '', regex=True).astype(float)
+
+    return data
 
 #_________________Sales Trends Function  (with Plotly)_______________________________
 def visualize_sales_trends(data, customer_col='Customer', product_col='Product name', 

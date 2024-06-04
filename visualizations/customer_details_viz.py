@@ -1,7 +1,33 @@
 import plotly.express as px
 import pandas as pd
 import streamlit as st
+import numpy as np
+def preprocess_data(data):
+    """
+    Data preprocessing: data type conversion and cleaning.
 
+    Args:
+        data: A Pandas DataFrame with the source data.
+
+    Returns:
+        Pandas DataFrame with the processed data.
+    """
+
+    # Identify numeric columns automatically
+    numeric_cols = data.select_dtypes(include=np.number).columns
+
+    # Process numeric columns
+    for col in numeric_cols:
+        # Check for missing values (NaN)
+        if np.isnan(data[col]).any():
+            # Fill missing values with 0 (you can choose another strategy)
+            data[col].fillna(0, inplace=True)
+            print(f"Warning: Column '{col}' contains missing values (NaN). Filled with 0.")
+
+    # Remove currency symbols and thousands separators
+    data[numeric_cols] = data[numeric_cols].replace('[$,]', '', regex=True).astype(float)
+
+    return data
 #Visualization Customer_details
 def plot_orders_and_sales_plotly(df, group_col='Group'):
     orders = df.groupby(group_col)["Total orders"].sum()

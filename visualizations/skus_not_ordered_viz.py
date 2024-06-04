@@ -23,7 +23,9 @@ def preprocess_data(data):
     for col in numeric_cols:
         # Check for missing values (NaN)
         if np.isnan(data[col]).any():
-            print(f"Warning: Column '{col}' contains missing values (NaN).")
+            # Fill missing values with 0 (you can choose another strategy)
+            data[col].fillna(0, inplace=True)
+            print(f"Warning: Column '{col}' contains missing values (NaN). Filled with 0.")
 
     # Remove currency symbols and thousands separators
     data[numeric_cols] = data[numeric_cols].replace('[$,]', '', regex=True).astype(float)

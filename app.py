@@ -1,7 +1,21 @@
 import streamlit as st
 import pandas as pd
 import os
+import httpx
 import asyncio
+
+
+from langchain_openai import ChatOpenAI
+from langchain.agents import AgentExecutor
+from langchain_experimental.agents.agent_toolkits import create_csv_agent
+from langchain.prompts import ChatPromptTemplate
+from langchain_core.utils.function_calling import convert_to_openai_function
+from langchain.agents.format_scratchpad import format_to_openai_function_messages
+from langchain.agents.output_parsers import OpenAIFunctionsAgentOutputParser
+from langchain.agents.agent_types import AgentType
+
+
+
 from visualizations import (
     third_party_sales_viz, order_sales_summary_viz, best_sellers_viz,
     reps_details_viz, reps_summary_viz, skus_not_ordered_viz,
@@ -25,11 +39,42 @@ async def read_csv(file_path):
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(None, pd.read_csv, file_path)
 
-async def chat_with_csv(df, prompt):
-    # Placeholder for chat interaction logic
-    result = {"message": "Chat result based on the prompt and the DataFrame"}
-    await asyncio.sleep(0)  # Simulate async work
-    return result
+async def chat_with_file(prompt, file_path):
+    file_name = get_file_name()
+    last_uploaded_file_path = os.path.join(UPLOAD_DIR, file_name)
+    try:
+        if last_uploaded_file_path is None or not os.path.exists(last_uploaded_file_path):
+            raise HTTPException(status_code=400, detail=f"No file has been uploaded or downloaded yet {last_uploaded_file_path}")
+            
+        result = chat_with_agent(prompt, last_uploaded_file_path)
+        
+        return {"response": result}
+
+    except ValueError as e:
+        return {"error": f"ValueError: {str(e)}"}
+    except Exception as e:
+        return {"error": str(e)}
+
+def chat_with_agent(input_string, file_path):
+    try:
+        # Assuming file_path is always CSV after conversion
+        df = pd.read_csv(file_path)
+
+        agent = create_csv_agent(
+            ChatOpenAI(temperature=0, model="gpt-3.5-turbo"),
+            file_path,
+            verbose=True,
+            agent_type=AgentType.OPENAI_FUNCTIONS
+        )
+        result = agent.invoke(input_string)
+        return result
+    except ImportError as e:
+        raise ValueError("Missing optional dependency 'tabulate'. Use pip or conda to install tabulate.")
+    except pd.errors.ParserError as e:
+        raise ValueError("Parsing error occurred: " + str(e))
+    except Exception as e:
+        raise ValueError(f"An error occurred: {str(e)}")
+
 
 async def main_viz():
     st.title("Excel Report Analysis")
@@ -48,9 +93,11 @@ async def main_viz():
             input_text = st.text_area("Enter your query")
             if input_text is not None:
                 if st.button("Chat with CSV"):
-                    st.info("Your Query: " + input_text)
-                    result =await chat_with_csv(df, input_text)
-                    st.success(result)
+                    result = await chat_with_file(input_text, last_uploaded_file_path)
+                    if "response" in result:
+                        st.success(result["response"])
+                    else:
+                        st.error(result.get("error", "Unknown error occurred"))
         if file_type == "3rd Party Sales Summary report":
             cc1, cc2 = st.columns([1,1])
 
@@ -71,7 +118,7 @@ async def main_viz():
             cc1, cc2 = st.columns([1,1])
 
             with cc1:
-                df = order_sales_summary_viz.preprocess_data(pd.read_csv(last_uploaded_file_path))
+                #df = order_sales_summary_viz.preprocess_data(pd.read_csv(last_uploaded_file_path))
                 order_sales_summary_viz.visualize_sales_trends(df)
                 order_sales_summary_viz.visualize_product_analysis(df)
                 order_sales_summary_viz.visualize_discount_analysis(df)
@@ -100,6 +147,7 @@ async def main_viz():
             cc1, cc2 = st.columns([1,1])
 
             with cc1:
+                df = reps_details_viz.preprocess_data(pd.read_csv(last_uploaded_file_path))
                 reps_details_viz.analyze_sales_rep_efficiency(df)
                 reps_details_viz.plot_active_customers_vs_visits(df)
                 reps_details_viz.plot_travel_efficiency_line(df)
@@ -136,6 +184,7 @@ async def main_viz():
             cc1, cc2 = st.columns([1,1])
 
             with cc1:
+                df = low_stock_inventory_viz.preprocess_data(pd.read_csv(last_uploaded_file_path))
                 low_stock_inventory_viz.low_stock_analysis_app(df)
                 low_stock_inventory_viz.create_profit_margin_analysis_plot(df)
                 low_stock_inventory_viz.create_low_stock_by_manufacturer_bar_plot(df)
@@ -146,6 +195,7 @@ async def main_viz():
             cc1, cc2 = st.columns([1,1])
 
             with cc1:
+                df = current_inventory_viz.preprocess_data(pd.read_csv(last_uploaded_file_path))
                 current_inventory_viz.df_analyze_inventory_value_by_category(df)
                 current_inventory_viz.df_analyze_quantity_vs_retail_price(df)
                 current_inventory_viz.df_analyze_inventory_value_by_manufacturer(df)
@@ -155,6 +205,7 @@ async def main_viz():
         elif file_type == "Top Customers report":
             cc1, cc2 = st.columns([1,1])
             with cc1:
+                df = top_customers_viz.preprocess_data(pd.read_csv(last_uploaded_file_path))
                 top_customers_viz.customer_analysis_app(df)
                 top_customers_viz.interactive_bar_plot_app(df)
 
@@ -164,6 +215,7 @@ async def main_viz():
         elif file_type == "Customer Details report":
             cc1, cc2 = st.columns([1,1])
             with cc1:
+                df = customer_details_viz.preprocess_data(pd.read_csv(last_uploaded_file_path))
                 customer_details_viz.plot_orders_and_sales_plotly(df)
                 customer_details_viz.bar_plot_sorted_with_percentages(df)
             with cc2:
@@ -171,12 +223,92 @@ async def main_viz():
                 customer_details_viz.create_interactive_average_sales_heatmap(df)
 
         else:
-                        #here can turn on lida and try to analyze dataset automatically by its toolset
+            df = customer_details_viz.preprocess_data(pd.read_csv(last_uploaded_file_path))
+            #here can turn on lida and try to analyze dataset automatically by its toolset
+            lida_call(query, df)
             st.markdown('Description')
-            st.caption('This is a string that explains something above.')
+            cc1, cc2 = st.columns([1,1])
+            with cc1:
+                st.markdown('Description 1 ')
+            with cc2:
+                st.markdown('Description 2 ')
 
     else:
         st.warning("No file has been uploaded or downloaded yet.")
+
+def lida_call(query, df):
+    from lida import Manager, TextGenerationConfig, llm
+    from lida.datamodel import Goal
+
+
+    prompt_content = f"""
+    The dataset is ALREADY loaded into a DataFrame named 'df'. DO NOT load the data again.
+    always start code with import useful libs like pyplot
+    Try to make the graphs more attractive and if you can add columns label to it
+    The DataFrame has the following columns: {column_names}
+    Before plotting, ensure the data is ready use this code:
+    data['Created at'] = pd.to_datetime(data['Created at'])
+    # Identify numeric columns automatically
+    numeric_cols = data.select_dtypes(include=np.number).columns
+    data[numeric_cols] = data[numeric_cols].replace('[$,]', '', regex=True).astype(float)
+    Use package Pandas and Matplotlib ONLY.
+    Provide SINGLE CODE BLOCK with a solution using Pandas and Matplotlib plots in a single figure to address the following query:
+    {query}
+    - USE SINGLE CODE BLOCK with a solution. 
+    - Do NOT EXPLAIN the code 
+    - DO NOT COMMENT the code. 
+    - ALWAYS WRAP UP THE CODE IN A SINGLE CODE BLOCK.
+    - The code block must start and end with ```
+        
+    - Example code format ```code```
+    
+    - Colors to use for background and axes of the figure : #F0F0F6
+    - Try to use the following color palette for coloring the plots : #8f63ee #ced5ce #a27bf6 #3d3b41
+        
+    """
+    # Define the messages for the OpenAI model
+    messages = [
+        {
+            "role": "system",
+            "content": "You are a helpful Data Visualization assistant who gives a single block without explaining or commenting the code to plot. IF ANYTHING NOT ABOUT THE DATA, JUST politely respond that you don't know.",
+        },
+        {"role": "user", "content": prompt_content},
+    ]
+    # Call OpenAI and display the response
+    with st.status("📟 *Prompting is the new programming*..."):
+        with st.chat_message("assistant", avatar="📊"):
+            botmsg = st.empty()
+            response = []
+            for chunk in openai.ChatCompletion.create(
+                model=MODEL_NAME, messages=messages, stream=True
+            ):
+                text = chunk.choices[0].get("delta", {}).get("content")
+                if text:
+                    response.append(text)
+                    result = "".join(response).strip()
+                    botmsg.write(result)
+    execute_openai_code(result, df, query)
+
+    uploaded_file = st.sidebar.file_uploader("Choose a CSV or JSON file", type=["csv", "json"])
+
+    if uploaded_file is not None:
+        # Get the original file name and extension
+        file_name, file_extension = os.path.splitext(uploaded_file.name)
+
+        # Load the data depending on the file type
+        if file_extension.lower() == ".csv":
+                data = pd.read_csv(uploaded_file)
+        elif file_extension.lower() == ".json":
+            data = pd.read_json(uploaded_file)
+
+        # Save the data using the original file name in the data dir
+        uploaded_file_path = os.path.join("data", uploaded_file.name)
+        data.to_csv(uploaded_file_path, index=False)
+
+        selected_dataset = uploaded_file_path
+
+        datasets.append({"label": file_name, "url": uploaded_file_path})
+
 
 if __name__ == "__main__":
     asyncio.run(main_viz())
