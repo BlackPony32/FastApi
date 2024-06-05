@@ -1,9 +1,10 @@
 import streamlit as st
 import pandas as pd
 import os
+import openai
 import httpx
 import asyncio
-
+from dotenv import load_dotenv
 
 from langchain_openai import ChatOpenAI
 from langchain.agents import AgentExecutor
@@ -23,7 +24,7 @@ from visualizations import (
 )
 from side_func import identify_file, get_file_name
 #from main import file_name
-
+load_dotenv()
 st.set_page_config(layout="wide")
 
 UPLOAD_DIR = "uploads"
@@ -225,7 +226,7 @@ async def main_viz():
         else:
             df = customer_details_viz.preprocess_data(pd.read_csv(last_uploaded_file_path))
             #here can turn on lida and try to analyze dataset automatically by its toolset
-            lida_call(query, df)
+            #lida_call(query=input_text, df=df)
             st.markdown('Description')
             cc1, cc2 = st.columns([1,1])
             with cc1:
@@ -245,7 +246,6 @@ def lida_call(query, df):
     The dataset is ALREADY loaded into a DataFrame named 'df'. DO NOT load the data again.
     always start code with import useful libs like pyplot
     Try to make the graphs more attractive and if you can add columns label to it
-    The DataFrame has the following columns: {column_names}
     Before plotting, ensure the data is ready use this code:
     data['Created at'] = pd.to_datetime(data['Created at'])
     # Identify numeric columns automatically
@@ -280,7 +280,7 @@ def lida_call(query, df):
             botmsg = st.empty()
             response = []
             for chunk in openai.ChatCompletion.create(
-                model=MODEL_NAME, messages=messages, stream=True
+                model='gpt-3.5-turbo', messages=messages, stream=True
             ):
                 text = chunk.choices[0].get("delta", {}).get("content")
                 if text:
@@ -289,26 +289,179 @@ def lida_call(query, df):
                     botmsg.write(result)
     execute_openai_code(result, df, query)
 
-    uploaded_file = st.sidebar.file_uploader("Choose a CSV or JSON file", type=["csv", "json"])
+    if last_uploaded_file_path is not None:
+        data = pd.read_csv('uploads/last_uploaded.csv')
+        selected_dataset = data
 
-    if uploaded_file is not None:
-        # Get the original file name and extension
-        file_name, file_extension = os.path.splitext(uploaded_file.name)
+    # summarization_methods = ["default", "llm", "columns"]
+    summarization_methods = [
+        {"label": "llm",
+         "description":
+         "Uses the LLM to generate annotate the default summary, adding details such as semantic types for columns and dataset description"},
+]
 
-        # Load the data depending on the file type
-        if file_extension.lower() == ".csv":
-                data = pd.read_csv(uploaded_file)
-        elif file_extension.lower() == ".json":
-            data = pd.read_json(uploaded_file)
+    # selected_method = st.sidebar.selectbox("Choose a method", options=summarization_methods)
+    selected_method_label = st.sidebar.selectbox(
+        'Choose a method',
+        options=[method["label"] for method in summarization_methods],
+        index=0
+    )
 
-        # Save the data using the original file name in the data dir
-        uploaded_file_path = os.path.join("data", uploaded_file.name)
-        data.to_csv(uploaded_file_path, index=False)
+    selected_method = summarization_methods[[
+        method["label"] for method in summarization_methods].index(selected_method_label)]["label"]
 
-        selected_dataset = uploaded_file_path
+    # add description of selected method in very small font to sidebar
+    selected_summary_method_description = summarization_methods[[
+        method["label"] for method in summarization_methods].index(selected_method_label)]["description"]
 
-        datasets.append({"label": file_name, "url": uploaded_file_path})
+    if selected_method:
+        st.sidebar.markdown(
+            f"<span> {selected_summary_method_description} </span>",
+            unsafe_allow_html=True)
+        
 
+    # Step 3 - Generate data summary
+    if selected_method:
+        lida = Manager(text_gen=llm("openai", api_key=openai_key))
+        textgen_config = TextGenerationConfig(
+            n=1,
+            temperature=temperature,
+            model=selected_model,
+            use_cache=use_cache)
+
+        st.write("## Summary")
+        # **** lida.summarize *****
+        summary = lida.summarize(
+            selected_dataset,
+            summary_method=selected_method,
+            textgen_config=textgen_config)
+
+        if "dataset_description" in summary:
+            st.write(summary["dataset_description"])
+
+        if "fields" in summary:
+            fields = summary["fields"]
+            nfields = []
+            for field in fields:
+                flatted_fields = {}
+                flatted_fields["column"] = field["column"]
+                # flatted_fields["dtype"] = field["dtype"]
+                for row in field["properties"].keys():
+                    if row != "samples":
+                        flatted_fields[row] = field["properties"][row]
+                    else:
+                        flatted_fields[row] = str(field["properties"][row])
+                # flatted_fields = {**flatted_fields, **field["properties"]}
+                nfields.append(flatted_fields)
+            nfields_df = pd.DataFrame(nfields)
+            st.write(nfields_df)
+        else:
+            st.write(str(summary))
+
+        # Step 4 - Generate goals
+        if summary:
+            # **** lida.goals *****
+            goals = lida.goals(summary, n=5, textgen_config=textgen_config)
+            st.write(f"## Goals ({len(goals)})")
+
+            prompt_content = f"""
+                The dataset is ALREADY loaded into a DataFrame named 'df'. DO NOT load the data again.
+                always start code with import useful libs like pyplot
+                Try to make the graphs more attractive and if you can add columns label to it
+
+                Before plotting, ensure the data is ready use this code:
+                data['Created at'] = pd.to_datetime(data['Created at'])
+
+                # Identify numeric columns automatically
+                numeric_cols = data.select_dtypes(include=np.number).columns
+                data[numeric_cols] = data[numeric_cols].replace('[$,]', '', regex=True).astype(float)
+
+                Use package Pandas and Matplotlib ONLY.
+                Provide SINGLE CODE BLOCK with a solution using Pandas and Matplotlib plots in a single figure to address the following query:
+
+                {goals[0].question}
+
+                - USE SINGLE CODE BLOCK with a solution.
+                - Do NOT EXPLAIN the code
+                - DO NOT COMMENT the code.
+                - ALWAYS WRAP UP THE CODE IN A SINGLE CODE BLOCK.
+                - The code block must start and end with ```
+
+                - Example code format ```code```
+
+                - Colors to use for background and axes of the figure : #F0F0F6
+                - Try to use the following color palette for coloring the plots : #8f63ee #ced5ce #a27bf6 #3d3b41
+
+                """
+
+            default_goal = goals[0].question
+            goal_questions = [goal.question for goal in goals]
+
+            selected_goal = st.selectbox('Choose a generated goal', options=goal_questions, index=0)
+
+            # st.markdown("### Selected Goal")
+            selected_goal_index = goal_questions.index(selected_goal)
+            st.write(goals[selected_goal_index])
+
+            selected_goal_object = goals[selected_goal_index]
+
+            # Step 5 - Generate visualizations
+            if selected_goal_object:
+                visualization_libraries = 'seaborn'
+
+                selected_library = st.sidebar.selectbox(
+                    'Choose a visualization library',
+                    options=visualization_libraries,
+                    index=0
+                )
+
+                # Update the visualization generation call to use the selected library.
+                st.write("## Visualizations")
+
+                # slider for number of visualizations
+                num_visualizations = st.sidebar.slider(
+                    "Number of visualizations to generate",
+                    min_value=1,
+                    max_value=10,
+                    value=2)
+
+                textgen_config = TextGenerationConfig(
+                    n=num_visualizations, temperature=temperature,
+                    model=selected_model,
+                    use_cache=use_cache)
+
+                # **** lida.visualize *****
+                visualizations = lida.visualize(
+                    summary=summary,
+                    goal=selected_goal_object,
+                    textgen_config=textgen_config,
+                    library=selected_library)
+
+                viz_titles = [f'Visualization {i+1}' for i in range(len(visualizations))]
+
+                selected_viz_title = st.selectbox('Choose a visualization', options=viz_titles, index=0)
+
+                selected_viz = visualizations[viz_titles.index(selected_viz_title)]
+
+                if selected_viz.raster:
+                    from PIL import Image
+                    import io
+                    import base64
+
+                    imgdata = base64.b64decode(selected_viz.raster)
+                    img = Image.open(io.BytesIO(imgdata))
+                    st.image(img, caption=selected_viz_title, use_column_width=True)
+
+                st.write("### Visualization Code")
+                st.code(selected_viz.code)
+
+    
+    
+    
+    
+    
+    
+    
 
 if __name__ == "__main__":
     asyncio.run(main_viz())

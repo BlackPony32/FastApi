@@ -61,15 +61,26 @@ def visualize_sales_trends(data, customer_col='Customer', product_col='Product n
 
     with tab2:
         st.subheader("Monthly Sales Trend")
+        data['Created at'] = pd.to_datetime(data['Created at'])
+
+        # Specify the column name for grand total
+        grand_total_col = 'Grand total'
+
+        # Calculate monthly sales
         monthly_sales = data.groupby(pd.Grouper(key='Created at', freq='M'))[grand_total_col].sum()
-        fig = px.line(monthly_sales, 
-                       x=monthly_sales.index, 
-                       y=monthly_sales.values, 
-                       title="Monthly Sales Trend", 
-                       markers=True) 
+
+        # Create the plot
+        fig = px.line(
+            monthly_sales,
+            x=monthly_sales.index,
+            y=monthly_sales.values,
+            title="Monthly Sales Trend",
+            markers=True
+        )
+
+        # Update the layout
         fig.update_layout(xaxis_title="Month", yaxis_title="Sales Amount")
         st.plotly_chart(fig)
-
         st.markdown("""
         ## Monthly Sales Trend Insights
 

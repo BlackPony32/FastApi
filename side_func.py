@@ -25,7 +25,7 @@ def identify_file(uploaded_file):
         columns = set(df.columns)
 
         
-        '''
+        
         # Define known column sets
         representative_details_cols = {'Role', 'Id', 'Status', 'Name', 'Email', 'Phone number', 'Assigned customers',
                                        'Active customers', 'Inactive customers', 'Total visits', 'Total photos',
@@ -72,14 +72,14 @@ def identify_file(uploaded_file):
             elif "SKU" in file_name:
                 return "SKU's Not Ordered report"
             else:
-                return "Unknown (similar columns to Best Sellers and SKU's Not Ordered)"
+                return "SKU's Not Ordered report" #"Unknown (similar columns to Best Sellers and SKU's Not Ordered)"
         elif columns == skus_not_ordered_cols:
             if "Low" in file_name:
                 return "Low Stock Inventory report"
             elif "Current" in file_name:
                 return "Current Inventory report"
             else:
-                return "Unknown (similar columns to Low Stock and Current Inventory)"
+                return "Current Inventory report" #"Unknown (similar columns to Low Stock and Current Inventory)"
         elif columns == third_party_sales_summary_cols:
             return "3rd Party Sales Summary report"
         elif columns == top_customers_cols and "Top" in file_name:
@@ -154,7 +154,7 @@ def identify_file(uploaded_file):
             return "Customer Details report"
         else:
             return "Unknown"
-
+'''
 
 
     except Exception as e:

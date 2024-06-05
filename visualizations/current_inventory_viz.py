@@ -33,20 +33,26 @@ def preprocess_data(data):
     return data
 #Analyzes and visualizes the total inventory value by category
 def df_analyze_inventory_value_by_category(df):
-    if df['Wholesale price'].dtype == 'object':
-        df['Wholesale price'] = pd.to_numeric(df['Wholesale price'].str.replace(',', '').str.replace('$ ', ''))
+    # Calculate 'Inventory Value'
     df["Inventory Value"] = df["Available cases (QTY)"] * df["Wholesale price"]
-    category_value = df.groupby("Category name")["Inventory Value"].sum()
+    
+    # Group by 'Category name' and sum the 'Inventory Value'
+    category_value = df.groupby("Category name")["Inventory Value"].sum().reset_index()
 
-    fig = px.pie(
-        values=category_value.values,
-        names=category_value.index,
+    # Create the bar chart
+    fig = px.bar(
+        category_value,
+        x='Category name',
+        y='Inventory Value',
         title="Inventory Value Distribution by Category",
-        color_discrete_sequence=px.colors.qualitative.Light24,
-        hole=0.3  # Create a donut chart
+        color='Category name',
+        color_discrete_sequence=px.colors.qualitative.Light24
     )
+    
+    # Update the layout for better visualization
+    fig.update_layout(xaxis_title="Category", yaxis_title="Inventory Value", showlegend=True)
 
-    fig.update_traces(textposition='inside', textinfo='percent+label')
+    # Display the plot in Streamlit
     st.plotly_chart(fig, use_container_width=True)
 
     st.markdown("""
@@ -88,20 +94,30 @@ def df_analyze_quantity_vs_retail_price(df):
 
 #Analyzing Inventory Value Distribution Across Manufacturers
 def df_analyze_inventory_value_by_manufacturer(df):
+    # Ensure 'Wholesale price' is numeric
     if df['Wholesale price'].dtype == 'object':
         df['Wholesale price'] = pd.to_numeric(df['Wholesale price'].str.replace(',', '').str.replace('$ ', ''))
+    
+    # Calculate 'Inventory Value'
     df["Inventory Value"] = df["Available cases (QTY)"] * df["Wholesale price"]
-    manufacturer_value = df.groupby("Manufacturer name")["Inventory Value"].sum()
+    
+    # Group by 'Manufacturer name' and sum the 'Inventory Value'
+    manufacturer_value = df.groupby("Manufacturer name")["Inventory Value"].sum().reset_index()
 
-    fig = px.pie(
-        values=manufacturer_value.values,
-        names=manufacturer_value.index,
+    # Create the bar chart
+    fig = px.bar(
+        manufacturer_value,
+        x='Manufacturer name',
+        y='Inventory Value',
         title="Inventory Value Distribution by Manufacturer",
-        color_discrete_sequence=px.colors.qualitative.Pastel,
-        hole=0.3  # Create a donut chart
+        color='Manufacturer name',
+        color_discrete_sequence=px.colors.qualitative.Pastel
     )
+    
+    # Update the layout for better visualization
+    fig.update_layout(xaxis_title="Manufacturer", yaxis_title="Inventory Value", showlegend=True)
 
-    fig.update_traces(textposition='inside', textinfo='percent+label')
+    # Display the plot in Streamlit
     st.plotly_chart(fig, use_container_width=True)
 
     st.markdown("""
@@ -112,23 +128,34 @@ def df_analyze_inventory_value_by_manufacturer(df):
 
 #Analyzes and visualizes the average inventory value per unit for each product
 def df_analyze_inventory_value_per_unit(df):
+    # Ensure 'Wholesale price' is numeric
     if df['Wholesale price'].dtype == 'object':
         df['Wholesale price'] = pd.to_numeric(df['Wholesale price'].str.replace(',', '').str.replace('$ ', ''))
+    
+    # Calculate 'Inventory Value per Unit'
     df["Inventory Value per Unit"] = pd.to_numeric(df["Wholesale price"], errors='coerce')
     df = df.dropna(subset=["Inventory Value per Unit"])
+    
     # Calculate total value per product
     df['Total Value'] = df["Inventory Value per Unit"] * df['Available cases (QTY)']
-    product_value = df.groupby("Product name")["Total Value"].sum()
+    
+    # Group by 'Product name' and sum the 'Total Value'
+    product_value = df.groupby("Product name")["Total Value"].sum().reset_index()
 
-    fig = px.pie(
-        values=product_value.values,
-        names=product_value.index,
+    # Create the bar chart
+    fig = px.bar(
+        product_value,
+        x='Product name',
+        y='Total Value',
         title="Inventory Value Distribution by Product",
-        color_discrete_sequence=px.colors.qualitative.Pastel,
-        hole=0.3  # Create a donut chart
+        color='Product name',
+        color_discrete_sequence=px.colors.qualitative.Pastel
     )
+    
+    # Update the layout for better visualization
+    fig.update_layout(xaxis_title="Product", yaxis_title="Total Value", showlegend=True)
 
-    fig.update_traces(textposition='inside', textinfo='percent+label')
+    # Display the plot in Streamlit
     st.plotly_chart(fig, use_container_width=True)
 
     st.markdown("""
