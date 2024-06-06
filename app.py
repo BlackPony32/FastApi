@@ -60,7 +60,6 @@ def chat_with_agent(input_string, file_path):
     try:
         # Assuming file_path is always CSV after conversion
         df = pd.read_csv(file_path)
-
         agent = create_csv_agent(
             ChatOpenAI(temperature=0, model="gpt-3.5-turbo"),
             file_path,

@@ -122,7 +122,7 @@ def download_file(request: DownloadRequest):
 
         csv_file_path = convert_excel_to_csv(excel_file_path)
 
-        streamlit_url = "http://localhost:8501"  # URL where the Streamlit app will be running
+        streamlit_url = "https://reportsai.streamlit.app/#excel-report-analysis"  # URL where the Streamlit app will be running
         return {"message": "File downloaded and converted successfully", "streamlit_url": streamlit_url}
 
     except requests.exceptions.RequestException as e:

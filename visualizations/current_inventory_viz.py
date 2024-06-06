@@ -123,7 +123,7 @@ def df_analyze_inventory_value_by_manufacturer(df):
     st.markdown("""
     ## Inventory Value: A Manufacturer Breakdown
 
-    This donut chart illustrates the proportional distribution of inventory value across different manufacturers. This allows you to see at a glance which manufacturers contribute the most to your overall inventory value. 
+    This bar chart illustrates the proportional distribution of inventory value across different manufacturers. This allows you to see at a glance which manufacturers contribute the most to your overall inventory value. 
     """)
 
 #Analyzes and visualizes the average inventory value per unit for each product
@@ -161,7 +161,7 @@ def df_analyze_inventory_value_per_unit(df):
     st.markdown("""
     ## Inventory Value: A Product Breakdown
 
-    This donut chart breaks down the distribution of inventory value across individual products, providing insights into which products contribute the most to the overall inventory value.
+    This bar chart breaks down the distribution of inventory value across individual products, providing insights into which products contribute the most to the overall inventory value.
     """)
 
 #Comparing Average Retail Prices Across Categories
