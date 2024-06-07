@@ -67,7 +67,7 @@ def chat_with_agent(input_string, file_path):
             agent_type=AgentType.OPENAI_FUNCTIONS
         )
         result = agent.invoke(input_string)
-        return result
+        return result['output']
     except ImportError as e:
         raise ValueError("Missing optional dependency 'tabulate'. Use pip or conda to install tabulate.")
     except pd.errors.ParserError as e:

@@ -44,7 +44,7 @@ class DownloadRequest(BaseModel):
     url: str
     filename: Optional[str] = None
 
-@app.post("/upload_many_file/")
+@app.post("/upload_many_files/")
 async def upload_many_file(files: list[UploadFile] = File(...)):
     global last_uploaded_file_paths
     last_uploaded_file_paths = []  # Reset the list for each new request
