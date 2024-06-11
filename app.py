@@ -120,7 +120,6 @@ async def main_viz():
                         st.success(result["response"])
                     else:
                         st.error(result.get("error", "Unknown error occurred"))
-            st.info("Chat Below 2 2 2 2")
             input_text2 = st.text_area("Enter your query for the plot")
             if input_text2 is not None:
                 if st.button("Build some chart"):

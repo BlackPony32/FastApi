@@ -98,8 +98,8 @@ async def upload_file(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/link_file_test/")
-def link_file_test(request: DownloadRequest):
+@app.post("/link_file_and_name/")
+def link_file_and_name(request: DownloadRequest):
     cleanup_uploads_folder()
     url = request.url
     filename = request.filename
