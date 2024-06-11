@@ -16,4 +16,8 @@ tabulate
 openpyxl
 streamlit
 plotly
-statsmodels 
+statsmodels
+pandasai
+qdrant_client
+chromadb
+pywin32

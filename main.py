@@ -47,6 +47,7 @@ class DownloadRequest(BaseModel):
 @app.post("/upload_many_files/")
 async def upload_many_file(files: list[UploadFile] = File(...)):
     global last_uploaded_file_paths
+    cleanup_uploads_folder()
     last_uploaded_file_paths = []  # Reset the list for each new request
 
     try:
@@ -75,6 +76,7 @@ async def upload_many_file(files: list[UploadFile] = File(...)):
 @app.post("/upload_file/")
 async def upload_file(file: UploadFile = File(...)):
     global last_uploaded_file_path
+    cleanup_uploads_folder()
     try:
         if not os.path.exists(UPLOAD_DIR):
             os.makedirs(UPLOAD_DIR)
@@ -92,10 +94,61 @@ async def upload_file(file: UploadFile = File(...)):
         else:
             last_uploaded_file_path = file_path
             
-        return JSONResponse(content={"message": "File uploaded successfully"})
+        return JSONResponse(content={"message": "File downloaded and converted successfully"})
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/link_file_test/")
+def link_file_test(request: DownloadRequest):
+    cleanup_uploads_folder()
+    url = request.url
+    filename = request.filename
+    
+    # Map provided filename to a friendly name if it exists
+    report_type_filenames = {
+        'CUSTOMER_DETAILS': 'customer_details.xlsx',
+        'TOP_CUSTOMERS': 'top_customers.xlsx',
+        'ORDER_SALES_SUMMARY': 'order_sales_summary.xlsx',
+        'THIRD_PARTY_SALES_SUMMARY': 'third_party_sales_summary.xlsx',
+        'CURRENT_INVENTORY': 'current_inventory.xlsx',
+        'LOW_STOCK_INVENTORY': 'low_stock_inventory.xlsx',
+        'BEST_SELLERS': 'best_sellers.xlsx',
+        'SKU_NOT_ORDERED': 'sku_not_ordered.xlsx',
+        'REP_DETAILS': 'rep_details.xlsx',
+        'REPS_SUMMARY': 'reps_summary.xlsx',
+    }
+
+    friendly_filename = report_type_filenames.get(filename, 'unknown.xlsx')
+
+    try:
+        logging.info(f"Downloading file from URL: {url}")
+
+        if not url.startswith(('http://', 'https://')):
+            raise HTTPException(status_code=400, detail="Invalid URL")
+
+        response = requests.get(url, stream=True)
+        response.raise_for_status()
+
+        mime_type = response.headers.get('Content-Type')
+        if mime_type != 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+            raise HTTPException(status_code=400, detail="Unsupported file type")
+
+        excel_file_path = os.path.join(UPLOAD_DIR, friendly_filename)
+        with open(excel_file_path, "wb") as file:
+            for chunk in response.iter_content(chunk_size=8192):
+                file.write(chunk)
+
+        csv_file_path = convert_excel_to_csv(excel_file_path)
+
+        streamlit_url = "http://13.48.178.51:8501/"  # URL where the Streamlit app will be running
+        return {"message": "File downloaded and converted successfully", "streamlit_url": streamlit_url}
+
+    except requests.exceptions.RequestException as e:
+        logging.error(f"RequestException: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Error downloading file: {e}")
+    except Exception as e:
+        logging.error(f"Exception: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {e}")
 
 @app.post("/download")
 def download_file(request: DownloadRequest):
@@ -122,7 +175,7 @@ def download_file(request: DownloadRequest):
 
         csv_file_path = convert_excel_to_csv(excel_file_path)
 
-        streamlit_url = "http://localhost:8501/"  # URL where the Streamlit app will be running
+        streamlit_url = "http://13.48.178.51:8501/"  # URL where the Streamlit app will be running
         return {"message": "File downloaded and converted successfully", "streamlit_url": streamlit_url}
 
     except requests.exceptions.RequestException as e:

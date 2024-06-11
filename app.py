@@ -15,7 +15,8 @@ from langchain.agents.format_scratchpad import format_to_openai_function_message
 from langchain.agents.output_parsers import OpenAIFunctionsAgentOutputParser
 from langchain.agents.agent_types import AgentType
 
-
+from pandasai.llm.openai import OpenAI
+from pandasai import SmartDataframe, Agent
 
 from visualizations import (
     third_party_sales_viz, order_sales_summary_viz, best_sellers_viz,
@@ -27,18 +28,35 @@ from side_func import identify_file, get_file_name
 load_dotenv()
 st.set_page_config(layout="wide")
 
+#openai_api_key = os.getenv("OPENAI_API_KEY")
+
+CHARTS_PATH = "exports/charts/"
 UPLOAD_DIR = "uploads"
 if not os.path.exists(UPLOAD_DIR):
     os.makedirs(UPLOAD_DIR)
-
+if not os.path.exists(CHARTS_PATH):
+    os.makedirs(CHARTS_PATH)
 
 file_name = get_file_name()
 last_uploaded_file_path = os.path.join(UPLOAD_DIR, file_name)
 
+def directory_contains_png_files(directory_path):
+    files = os.listdir(directory_path)
+    for file in files:
+        if file.endswith(".png"):
+            return True
+    return False
 
 async def read_csv(file_path):
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(None, pd.read_csv, file_path)
+
+async def build_some_chart(df, prompt):
+    llm = OpenAI()
+    # pandas_ai = SmartDataframe(df, config={"llm": llm})
+    pandas_ai = SmartDataframe(df, config={"llm": llm})
+    result = pandas_ai.chat(prompt)
+    return await result
 
 async def chat_with_file(prompt, file_path):
     file_name = get_file_name()
@@ -77,14 +95,18 @@ def chat_with_agent(input_string, file_path):
 
 
 async def main_viz():
-    st.title("Excel Report Analysis")
+    st.title("Report Analysis")
 
     if os.path.exists(last_uploaded_file_path):
-        st.success("File is available for visualization.")
         df = pd.read_csv(last_uploaded_file_path)
         col1, col2 = st.columns([1, 1])
         file_type = identify_file(df)
-        st.write(file_type)
+        
+        if file_type == 'Unknown':
+            st.warning(f"This is  {file_type} type report,so this is generated report to it")
+        else:
+            st.success(f"This is  {file_type} type. File is available for visualization.")
+        
         with col1:
             st.dataframe(df, use_container_width=True)
 
@@ -98,7 +120,24 @@ async def main_viz():
                         st.success(result["response"])
                     else:
                         st.error(result.get("error", "Unknown error occurred"))
-        if file_type == "3rd Party Sales Summary report":
+            st.info("Chat Below 2 2 2 2")
+            input_text2 = st.text_area("Enter your query for the plot")
+            if input_text2 is not None:
+                if st.button("Build some chart"):
+                    st.info("Your Query: " + input_text2)
+                    result = build_some_chart(df, input_text2)
+                    st.success(result)
+
+        # directory_path = "exports/charts/"
+        if directory_contains_png_files(CHARTS_PATH):
+            with col1:
+                st.subheader("Generated Visualisation")
+                st.image(f'{CHARTS_PATH}temp_chart.png')
+        
+        if df.empty:
+            st.warning("### This data report is empty - try downloading another one to get better visualizations")
+        
+        elif file_type == "3rd Party Sales Summary report":
             cc1, cc2 = st.columns([1,1])
 
             with cc1:
@@ -113,7 +152,6 @@ async def main_viz():
                 # line_chart_plotly()
                 third_party_sales_viz.analyze_discounts(df)
                 third_party_sales_viz.area_visualisation(df)
-
         elif file_type == "Order Sales Summary report":
             cc1, cc2 = st.columns([1,1])
 
@@ -226,12 +264,9 @@ async def main_viz():
             df = customer_details_viz.preprocess_data(pd.read_csv(last_uploaded_file_path))
             #here can turn on lida and try to analyze dataset automatically by its toolset
             #lida_call(query=input_text, df=df)
-            st.markdown('Description')
-            cc1, cc2 = st.columns([1,1])
-            with cc1:
-                st.markdown('Description 1 ')
-            with cc2:
-                st.markdown('Description 2 ')
+            st.write(big_summary(last_uploaded_file_path))
+            test_lida(df)
+            
 
     else:
         st.warning("No file has been uploaded or downloaded yet.")
@@ -454,13 +489,82 @@ def lida_call(query, df):
                 st.write("### Visualization Code")
                 st.code(selected_viz.code)
 
-    
-    
-    
-    
-    
-    
-    
+def big_summary(file_path):
+    try:
+        prompt = f"""
+        I have a CSV file that contains important business data.
+        I need a comprehensive and easy-to-read summary of this data that would be useful for a business owner.
+        The summary should include key insights, trends, and any significant patterns or anomalies found in the data.
+        Please ensure the summary is concise and written in layman's terms, focusing on actionable insights
+        that can help in decision-making.
+        """
+        result = chat_with_agent(prompt, file_path)
+        
+        return result
+
+    except ValueError as e:
+        return {"error": f"ValueError: {str(e)}"}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+def test_lida(df):
+    from lida import Manager, TextGenerationConfig, llm
+    from lida.datamodel import Goal
+    lida = Manager(text_gen = llm("openai")) 
+    textgen_config = TextGenerationConfig(n=1, 
+                                      temperature=0.1, model="gpt-3.5-turbo-0301", 
+                                      use_cache=True)
+    # load csv datset
+    summary = lida.summarize(df, 
+                summary_method="default", textgen_config=textgen_config)     
+
+    goals = lida.goals(summary, n=6, textgen_config=textgen_config)
+    visualization_libraries = "plotly"
+
+    cc1, cc2 = st.columns([1,1])
+    num_visualizations = 2
+
+    i = 0
+    for i, goal in enumerate(goals):
+        if i < 3:
+            with cc1:
+                st.write("The question for the report was generated by artificial intelligence: " + goals[i].question)
+                textgen_config = TextGenerationConfig(n=num_visualizations, temperature=0.1, model="gpt-3.5-turbo-0301", use_cache=True)
+                visualizations = lida.visualize(summary=summary,goal=goals[i],textgen_config=textgen_config,library=visualization_libraries)
+                if visualizations:  # Check if the visualizations list is not empty
+                    selected_viz = visualizations[0]
+                    exec_globals = {'data': df}
+                    exec(selected_viz.code, exec_globals)
+                    st.plotly_chart(exec_globals['chart'])
+                else:
+                    st.write("No visualizations were generated for this goal.")
+                
+                st.write("### Explanation of why this question can be useful: " + goals[i].rationale)
+                st.write("Method of visualization: " + goals[i].visualization)
+        else:
+            with cc2:
+                st.write("The question for the report was generated by artificial intelligence: " + goals[i].question)
+                
+                textgen_config = TextGenerationConfig(n=num_visualizations, temperature=0.1, model="gpt-3.5-turbo-0301", use_cache=True)
+                visualizations = lida.visualize(summary=summary,goal=goals[i],textgen_config=textgen_config,library=visualization_libraries)
+                
+                if visualizations:  # Check if the visualizations list is not empty
+                    selected_viz = visualizations[0]
+                    exec_globals = {'data': df}
+                    exec(selected_viz.code, exec_globals)
+                    st.plotly_chart(exec_globals['chart'])
+                else:
+                    st.write("No visualizations were generated for this goal.")
+                
+                st.write("### Explanation of why this question can be useful: " + goals[i].rationale)
+                st.write("Method of visualization: " + goals[i].visualization)
+
+
+
+
+
+
 
 if __name__ == "__main__":
     asyncio.run(main_viz())
