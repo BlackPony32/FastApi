@@ -20,4 +20,3 @@ statsmodels
 pandasai
 qdrant_client
 chromadb
-pywin32
