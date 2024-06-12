@@ -28,8 +28,6 @@ from side_func import identify_file, get_file_name
 load_dotenv()
 st.set_page_config(layout="wide")
 
-#openai_api_key = os.getenv("OPENAI_API_KEY")
-
 CHARTS_PATH = "exports/charts/"
 UPLOAD_DIR = "uploads"
 if not os.path.exists(UPLOAD_DIR):
@@ -341,11 +339,6 @@ def summary_lida(df):
                 
                 st.write("### Explanation of why this question can be useful: " + goals[i].rationale)
                 st.write("Method of visualization: " + goals[i].visualization)
-
-
-
-
-
 
 
 if __name__ == "__main__":
