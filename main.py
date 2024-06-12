@@ -32,8 +32,6 @@ UPLOAD_DIR_MANY = "uploads_many"
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-
-
 # List of synonyms for the word "visualize"
 visualization_keywords = ["visualize", "plot", "graph", "chart", "draw", "diagram", "display"]
 
