@@ -23,7 +23,7 @@ from visualizations import (
     reps_details_viz, reps_summary_viz, skus_not_ordered_viz,
     low_stock_inventory_viz, current_inventory_viz, top_customers_viz, customer_details_viz
 )
-from side_func import identify_file, get_file_name
+from side_func import identify_file, get_file_name, get_csv_columns
 #from main import file_name
 load_dotenv()
 st.set_page_config(layout="wide")
@@ -121,9 +121,10 @@ async def main_viz():
             input_text2 = st.text_area("Enter your query for the plot")
             if input_text2 is not None:
                 if st.button("Build some chart"):
-                    st.info("Your Query: " + input_text2)
-                    result = build_some_chart(df, input_text2)
-                    st.success(result)
+                    st.info("Plotting your Query: " + input_text2)
+                    #result = build_some_chart(df, input_text2)
+                    result = test_plot_maker(df, input_text2)
+                    #st.success(result)
 
         # directory_path = "exports/charts/"
         if directory_contains_png_files(CHARTS_PATH):
@@ -138,17 +139,40 @@ async def main_viz():
             cc1, cc2 = st.columns([1,1])
 
             with cc1:
+                columns = get_csv_columns(last_uploaded_file_path)
                 third_party_sales_viz.preprocess_data(pd.read_csv(last_uploaded_file_path))
-                third_party_sales_viz.visualize_product_analysis(df)
-                third_party_sales_viz.visualize_sales_trends(df)
-                third_party_sales_viz.visualize_combined_analysis(df)
 
+                if "Product name" and "Grand total" in columns:
+                    third_party_sales_viz.visualize_product_analysis(df)
+                else:
+                    st.warning("There is no Grand total or Product name, so visualizing can not be ready")
+                
+                if "Customer" and "Product name" and "QTY" and "Grand total" in columns:
+                    third_party_sales_viz.visualize_sales_trends(df)
+                else:
+                    st.warning("There is no Customer or Product name or Quantity or Grand total, so visualizing can not be ready")
+                
+                if "Delivery status" and "Product name" and "QTY" and "Grand total" in columns:
+                    third_party_sales_viz.visualize_combined_analysis(df)
+                else:
+                    st.warning("There is no Customer or Product name or Delivery status or Grand total, so visualizing can not be ready")
+                
             with cc2:
                 # bar_chart()
-                third_party_sales_viz.visualize_discount_analysis(df)
+                if "Discount type" and "Grand total" and "Total invoice discount" in columns:
+                    third_party_sales_viz.visualize_discount_analysis(df)
+                else:
+                    st.warning("visualize_discount_analysis")
                 # line_chart_plotly()
-                third_party_sales_viz.analyze_discounts(df)
-                third_party_sales_viz.area_visualisation(df)
+                if "Discount type" in columns:
+                    third_party_sales_viz.analyze_discounts(df)
+                else:
+                    st.warning("analyze_discounts")
+                
+                if "Grand total" and "Manufacturer specific" and "discount" and "Customer discount":
+                    third_party_sales_viz.area_visualisation(df)
+                else:
+                    st.warning("area_visualisation")
         elif file_type == "Order Sales Summary report":
             cc1, cc2 = st.columns([1,1])
 
@@ -286,6 +310,34 @@ def big_summary(file_path):
         return {"error": f"ValueError: {str(e)}"}
     except Exception as e:
         return {"error": str(e)}
+
+def test_plot_maker(df, text):
+    from lida import Manager, TextGenerationConfig, llm
+    from lida.datamodel import Goal
+    lida = Manager(text_gen = llm("openai")) 
+
+    visualization_libraries = "plotly"
+    i = 0
+    #cc1, cc2 = st.columns([2,1])
+    goals = [text]
+    textgen_config = TextGenerationConfig(n=1, 
+                                      temperature=0.1, model="gpt-3.5-turbo-0301", 
+                                      use_cache=True)
+    #with cc1:
+    summary = lida.summarize(df, 
+                summary_method="default", textgen_config=textgen_config) 
+    textgen_config = TextGenerationConfig(n=1, temperature=0.1, model="gpt-3.5-turbo-0301", use_cache=True)
+    visualizations = lida.visualize(summary=summary, goal=goals[0],textgen_config=textgen_config,library=visualization_libraries)
+    if visualizations:  # Check if the visualizations list is not empty
+        selected_viz = visualizations[0]
+        exec_globals = {'data': df}
+        exec(selected_viz.code, exec_globals)
+        st.plotly_chart(exec_globals['chart'])
+    else:
+        st.warning("No visualizations were generated for this query.")    
+    #with cc2:
+    #    st.success("Visualization is ready")
+
 
 
 def summary_lida(df):

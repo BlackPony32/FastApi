@@ -67,3 +67,26 @@ def extract_filename(url):
     
     return clean_filename
 
+def get_csv_columns(last_uploaded_file_path):
+    """
+    This function takes the path to a CSV file and returns a list of its column names.
+    
+    :param last_uploaded_file_path: Path to the CSV file.
+    :return: List of column names.
+    """
+    try:
+        # Read the CSV file into a DataFrame
+        df = pd.read_csv(last_uploaded_file_path)
+        
+        # Get the list of columns
+        columns = df.columns.tolist()
+        
+        return columns
+    except FileNotFoundError:
+        return "File not found. Please check the path."
+    except pd.errors.EmptyDataError:
+        return "No data. The file is empty."
+    except pd.errors.ParserError:
+        return "Error parsing data. Please check the file format."
+    except Exception as e:
+        return f"An error occurred: {e}"
