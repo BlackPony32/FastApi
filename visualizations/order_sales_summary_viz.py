@@ -140,7 +140,6 @@ def visualize_product_analysis(data, product_col='Product name', grand_total_col
 
 #_________________Discount Analysis Function (with Plotly)__________________________
 def visualize_discount_analysis(data, discount_type_col='Discount type', 
-                               grand_total_col='Grand total', 
                                total_discount_col='Total invoice discount'):
     tab1, tab2, tab3 = st.tabs(["Top Customers", "By Type", "Distribution"])
 

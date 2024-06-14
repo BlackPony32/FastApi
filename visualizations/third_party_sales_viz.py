@@ -109,7 +109,6 @@ def visualize_sales_trends(data, customer_col='Customer', product_col='Product n
 
 #Analysis of discounts
 def visualize_discount_analysis(data, discount_type_col='Discount type', 
-                               grand_total_col='Grand total', 
                                total_discount_col='Total invoice discount'):
     tab1, tab2, tab3 = st.tabs(["By Type", "Top Customers", "Distribution"])
 

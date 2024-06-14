@@ -140,52 +140,79 @@ async def main_viz():
 
             with cc1:
                 columns = get_csv_columns(last_uploaded_file_path)
+                st.write(columns)
                 third_party_sales_viz.preprocess_data(pd.read_csv(last_uploaded_file_path))
 
-                if "Product name" and "Grand total" in columns:
+                if "Product name" in columns and "Grand total" in columns:
                     third_party_sales_viz.visualize_product_analysis(df)
                 else:
                     st.warning("There is no Grand total or Product name, so visualizing can not be ready")
                 
-                if "Customer" and "Product name" and "QTY" and "Grand total" in columns:
+                if "Customer" in columns and "Product name" in columns and "QTY" in columns and "Grand total" in columns:
                     third_party_sales_viz.visualize_sales_trends(df)
                 else:
                     st.warning("There is no Customer or Product name or Quantity or Grand total, so visualizing can not be ready")
                 
-                if "Delivery status" and "Product name" and "QTY" and "Grand total" in columns:
+                if "Delivery status" in columns and "Product name" in columns and "QTY" in columns and "Grand total" in columns:
                     third_party_sales_viz.visualize_combined_analysis(df)
                 else:
                     st.warning("There is no Customer or Product name or Delivery status or Grand total, so visualizing can not be ready")
                 
             with cc2:
-                # bar_chart()
-                if "Discount type" and "Grand total" and "Total invoice discount" in columns:
+                columns = get_csv_columns(last_uploaded_file_path)
+                if "Discount type" in columns and "Total invoice discount" in columns:
                     third_party_sales_viz.visualize_discount_analysis(df)
                 else:
-                    st.warning("visualize_discount_analysis")
+                    st.warning("There is no Discount type or Total invoice discount, so visualizing can not be ready")
                 # line_chart_plotly()
                 if "Discount type" in columns:
                     third_party_sales_viz.analyze_discounts(df)
                 else:
-                    st.warning("analyze_discounts")
+                    st.warning("There is no Discount type, so visualizing can not be ready")
                 
-                if "Grand total" and "Manufacturer specific" and "discount" and "Customer discount":
+                if "Grand total" in columns and "Manufacturer specific discount" in columns and "Customer discount" in columns:
                     third_party_sales_viz.area_visualisation(df)
                 else:
-                    st.warning("area_visualisation")
+                    st.warning("There is no Grand total or Manufacturer specific discount or Customer discount, so visualizing can not be ready")
         elif file_type == "Order Sales Summary report":
             cc1, cc2 = st.columns([1,1])
 
             with cc1:
+                columns = get_csv_columns(last_uploaded_file_path)
+                st.write(columns)
                 #df = order_sales_summary_viz.preprocess_data(pd.read_csv(last_uploaded_file_path))
-                order_sales_summary_viz.visualize_sales_trends(df)
-                order_sales_summary_viz.visualize_product_analysis(df)
-                order_sales_summary_viz.visualize_discount_analysis(df)
+                
+                if "Customer" in columns and "Product name" in columns and "Created at" in columns:
+                    order_sales_summary_viz.visualize_sales_trends(df)
+                else:
+                    st.warning("visualize_sales_trends")
+                
+                if "Product name" in columns and "Grand total" in columns:
+                    order_sales_summary_viz.visualize_product_analysis(df)
+                else:
+                    st.warning("visualize_product_analysis")
+                
+                if "Discount type" in columns and "Total invoice discount" in columns and "Customer" in columns:
+                    order_sales_summary_viz.visualize_discount_analysis(df)
+                else:
+                    st.warning("visualize_discount_analysis")
+            
             with cc2:
                 # bar_chart()
-                order_sales_summary_viz.visualize_delivery_analysis(df)
-                order_sales_summary_viz.visualize_payment_analysis(df)
-                order_sales_summary_viz.visualize_combined_analysis(df)
+                if "Delivery status" in columns and "Delivery methods" in columns:
+                    order_sales_summary_viz.visualize_delivery_analysis(df)
+                else:
+                    st.warning("visualize_sales_trends")
+                
+                if "Payment status" in columns:
+                    order_sales_summary_viz.visualize_payment_analysis(df)
+                else:
+                    st.warning("visualize_sales_trends")
+                
+                if "Product name" in columns and "Grand total" in columns and "QTY" in columns and "Delivery status"in columns:
+                    order_sales_summary_viz.visualize_combined_analysis(df)
+                else:
+                    st.warning("visualize_sales_trends")
                 # line_chart_plotly()
             # todo check map data  (addresses or coordinates)
             #map_features()
@@ -194,92 +221,258 @@ async def main_viz():
             cc1, cc2 = st.columns([1,1])
 
             with cc1:
+                columns = get_csv_columns(last_uploaded_file_path)
+                st.write(columns)
                 df = best_sellers_viz.preprocess_data(pd.read_csv(last_uploaded_file_path))
-                best_sellers_viz.create_available_cases_plot(df)
-                best_sellers_viz.product_analysis_app(df)
-                best_sellers_viz.create_cases_revenue_relationship_plot(df)
+                
+                if "Available cases (QTY)" in columns and "Product name" in columns and "QTY" in columns and "Delivery status"in columns:
+                    best_sellers_viz.create_available_cases_plot(df)
+                else:
+                    st.warning("create_available_cases_plot")
+                if "Product name" in columns and "Total revenue" in columns and "Cases sold" in columns:
+                    best_sellers_viz.product_analysis_app(df)
+                else:
+                    st.warning("product_analysis_app")
+                if "Cases sold" in columns and "Total revenue" in columns:
+                    best_sellers_viz.create_cases_revenue_relationship_plot(df)
+                else:
+                    st.warning("create_cases_revenue_relationship_plot")
             with cc2:
                 # bar_chart()
-                best_sellers_viz.price_comparison_app(df)
-                best_sellers_viz.create_revenue_vs_profit_plot(df)
+                if "Category name" in columns and "Wholesale price" in columns and "Retail price" in columns:
+                    best_sellers_viz.price_comparison_app(df)
+                else:
+                    st.warning("price_comparison_app")
+                
+                if "Total revenue" in columns and "Product name" in columns:
+                    best_sellers_viz.create_revenue_vs_profit_plot(df)
+                else:
+                    st.warning("create_revenue_vs_profit_plot")
+                    
         elif file_type == "Representative Details report":
             cc1, cc2 = st.columns([1,1])
 
             with cc1:
+                columns = get_csv_columns(last_uploaded_file_path)
+                st.write(columns)
                 df = reps_details_viz.preprocess_data(pd.read_csv(last_uploaded_file_path))
-                reps_details_viz.analyze_sales_rep_efficiency(df)
-                reps_details_viz.plot_active_customers_vs_visits(df)
-                reps_details_viz.plot_travel_efficiency_line(df)
+                
+                if "Total working hours" in columns and "Total visits" in columns and "Assigned customers" in columns and "Role"in columns:
+                    reps_details_viz.analyze_sales_rep_efficiency(df)
+                else:
+                    st.warning("analyze_sales_rep_efficiency")
+                if "Role" in columns and "Active customers" in columns and "Total visits" in columns:
+                    reps_details_viz.plot_active_customers_vs_visits(df)
+                else:
+                    st.warning("plot_active_customers_vs_visits")
+                if "Total travel distance" in columns and "Total visits" in columns and "Role" in columns:
+                    reps_details_viz.plot_travel_efficiency_line(df)
+                else:
+                    st.warning("plot_travel_efficiency_line")
             with cc2:
-                reps_details_viz.analyze_work_hours_and_distance(df)
-                reps_details_viz.plot_visits_vs_photos_separate(df)
-                reps_details_viz.analyze_customer_distribution(df)
+                if "Total working hours" in columns and "Total break hours" in columns and "Total travel distance" in columns:
+                    reps_details_viz.analyze_work_hours_and_distance(df)
+                else:
+                    st.warning("analyze_work_hours_and_distance")
+                if "Role" in columns and "Total visits" in columns and "Total photos" in columns:
+                    reps_details_viz.plot_visits_vs_photos_separate(df)
+                else:
+                    st.warning("plot_visits_vs_photos_separate")
+                if "Role" in columns and "Assigned customers" in columns:
+                    reps_details_viz.analyze_customer_distribution(df)
+                else:
+                    st.warning("analyze_customer_distribution")
         elif file_type == "Reps Summary report":
             cc1, cc2 = st.columns([1,1])
 
             with cc1:
+                columns = get_csv_columns(last_uploaded_file_path)
+                st.write(columns)
                 df = reps_summary_viz.preprocess_data(pd.read_csv(last_uploaded_file_path))
-                reps_summary_viz.plot_sales_relationships(df)
-                reps_summary_viz.plot_visits_and_travel_distance_by_name(df)
-                reps_summary_viz.plot_cases_sold_by_day_of_week(df)
-                reps_summary_viz.plot_revenue_trend_by_month_and_role(df)
+                
+                if "Orders" in columns and "Total revenue" in columns and "Cases sold" in columns:
+                    reps_summary_viz.plot_sales_relationships(df)
+                else:
+                    st.warning("plot_sales_relationships")
+                    
+                if "Date" in columns and "Role" in columns and "Total revenue" in columns:
+                    reps_summary_viz.plot_revenue_by_month_and_role(df)
+                else:
+                    st.warning("plot_visits_and_travel_distance_by_name")
+                    
+                if "Date" in columns and "Day of Week" in columns:
+                    reps_summary_viz.plot_cases_sold_by_day_of_week(df)
+                else:
+                    st.warning("plot_cases_sold_by_day_of_week")
+                    
+                if "Date" in columns and "Total revenue" in columns and "Role" in columns:
+                    reps_summary_viz.plot_revenue_trend_by_month_and_role(df)
+                else:
+                    st.warning("plot_revenue_trend_by_month_and_role")
             with cc2:
-                reps_summary_viz.plot_revenue_by_month_and_role(df)
-                reps_summary_viz.plot_orders_vs_visits_with_regression(df)
-                reps_summary_viz.plot_multiple_metrics_by_role(df)
-                reps_summary_viz.plot_revenue_vs_cases_sold_with_size_and_color(df)
+                if "Name" in columns and "Visits" in columns and "Travel distance" in columns:
+                    reps_summary_viz.plot_visits_and_travel_distance_by_name(df)
+                else:
+                    st.warning("plot_visits_and_travel_distance_by_name")
+                if "Visits" in columns and "Orders" in columns:
+                    reps_summary_viz.plot_orders_vs_visits_with_regression(df)
+                else:
+                    st.warning("plot_orders_vs_visits_with_regression")
+                if "Role" in columns and "Visits" in columns and "Orders" in columns and "Cases sold" in columns:
+                    reps_summary_viz.plot_multiple_metrics_by_role(df)
+                else:
+                    st.warning("plot_multiple_metrics_by_role")
+                if "Cases sold" in columns and "Total revenue" in columns and "Visits" in columns and "Travel distance" in columns:
+                    reps_summary_viz.plot_revenue_vs_cases_sold_with_size_and_color(df)
+                else:
+                    st.warning("plot_revenue_vs_cases_sold_with_size_and_color")
         elif file_type == "SKU's Not Ordered report":
             cc1, cc2 = st.columns([1,1])
 
             with cc1:
+                columns = get_csv_columns(last_uploaded_file_path)
+                st.write(columns)
                 df = skus_not_ordered_viz.preprocess_data(pd.read_csv(last_uploaded_file_path))
-                skus_not_ordered_viz.create_unordered_products_by_category_plot(df)
-                skus_not_ordered_viz.create_available_cases_distribution_plot(df)
-                skus_not_ordered_viz.price_vs_available_cases_app(df)
+                
+                if "Category name" in columns:
+                    skus_not_ordered_viz.create_unordered_products_by_category_plot(df)
+                else:
+                    st.warning("create_unordered_products_by_category_plot")
+                    
+                if "Available cases (QTY)" in columns:
+                    skus_not_ordered_viz.create_available_cases_distribution_plot(df)
+                else:
+                    st.warning("create_available_cases_distribution_plot")
+                    
+                if "Category name" in columns and "Retail price" in columns and "Available cases (QTY)" in columns:
+                    skus_not_ordered_viz.price_vs_available_cases_app(df)
+                else:
+                    st.warning("price_vs_available_cases_app")
             with cc2:
-                skus_not_ordered_viz.create_wholesale_vs_retail_price_scatter(df)
-                skus_not_ordered_viz.df_unordered_products_per_category_and_price_range(df)
+                if "Available cases (QTY)" in columns and "Retail price" in columns and "Wholesale price" in columns and "Category name" in columns and "Profit Margin" in columns:
+                    skus_not_ordered_viz.create_wholesale_vs_retail_price_scatter(df)
+                else:
+                    st.warning("create_wholesale_vs_retail_price_scatter")
+                    
+                if "Category name" in columns and "Retail price" in columns and "Price Range" in columns:
+                    skus_not_ordered_viz.df_unordered_products_per_category_and_price_range(df)
+                else:
+                    st.warning("df_unordered_products_per_category_and_price_range")
         elif file_type == "Low Stock Inventory report":
             cc1, cc2 = st.columns([1,1])
 
             with cc1:
+                columns = get_csv_columns(last_uploaded_file_path)
+                st.write(columns)
                 df = low_stock_inventory_viz.preprocess_data(pd.read_csv(last_uploaded_file_path))
-                low_stock_inventory_viz.low_stock_analysis_app(df)
-                low_stock_inventory_viz.create_profit_margin_analysis_plot(df)
-                low_stock_inventory_viz.create_low_stock_by_manufacturer_bar_plot(df)
+                
+                if "Category name" in columns and "Product name" in columns and "Available cases (QTY)" in columns and "Wholesale price" in columns:
+                    low_stock_inventory_viz.low_stock_analysis_app(df)
+                else:
+                    st.warning("low_stock_analysis_app")
+                    
+                if "Retail price" in columns and "Wholesale price" in columns and "Product name" in columns and "Profit Margin" in columns:
+                    low_stock_inventory_viz.create_profit_margin_analysis_plot(df)
+                else:
+                    st.warning("create_profit_margin_analysis_plot")
+                    
+                if "Manufacturer name" in columns and "Product name" in columns:
+                    low_stock_inventory_viz.create_low_stock_by_manufacturer_bar_plot(df)
+                else:
+                    st.warning("create_low_stock_by_manufacturer_bar_plot")
             with cc2:
-                low_stock_inventory_viz.create_interactive_price_vs_quantity_plot(df)
-                low_stock_inventory_viz.create_quantity_price_ratio_plot(df)
+                if "Wholesale price" in columns and "Available cases (QTY)" in columns:
+                    low_stock_inventory_viz.create_interactive_price_vs_quantity_plot(df)
+                else:
+                    st.warning("create_interactive_price_vs_quantity_plot")
+                
+                if "Retail price" in columns and "Available cases (QTY)" in columns and "Product name" in columns:
+                    low_stock_inventory_viz.create_quantity_price_ratio_plot(df)
+                else:
+                    st.warning("create_quantity_price_ratio_plot")
         elif file_type == "Current Inventory report":
             cc1, cc2 = st.columns([1,1])
 
             with cc1:
+                columns = get_csv_columns(last_uploaded_file_path)
+                st.write(columns)
                 df = current_inventory_viz.preprocess_data(pd.read_csv(last_uploaded_file_path))
-                current_inventory_viz.df_analyze_inventory_value_by_category(df)
-                current_inventory_viz.df_analyze_quantity_vs_retail_price(df)
-                current_inventory_viz.df_analyze_inventory_value_by_manufacturer(df)
+                
+                if "Available cases (QTY)" in columns and "Wholesale price" in columns and " Category name" in columns:
+                    current_inventory_viz.df_analyze_inventory_value_by_category(df)
+                else:
+                    st.warning("df_analyze_inventory_value_by_category")
+                    
+                if "Available cases (QTY)" in columns and "Retail price" in columns and "Category name" in columns and "Wholesale price" in columns:
+                    current_inventory_viz.df_analyze_quantity_vs_retail_price(df)
+                else:
+                    st.warning("df_analyze_quantity_vs_retail_price")
+                    
+                if "Available cases (QTY)" in columns and "Wholesale price" in columns and "Manufacturer name" in columns:
+                    current_inventory_viz.df_analyze_inventory_value_by_manufacturer(df)
+                else:
+                    st.warning("df_analyze_inventory_value_by_manufacturer")
             with cc2:
-                current_inventory_viz.df_analyze_inventory_value_per_unit(df)
-                current_inventory_viz.df_compare_average_retail_prices(df)
+                if "Wholesale price" in columns and "Available cases (QTY)" in columns and "Product name" in columns:
+                    current_inventory_viz.df_analyze_inventory_value_per_unit(df)
+                else:
+                    st.warning("df_analyze_inventory_value_per_unit")
+                    
+                if "Retail price" in columns and "Category name" in columns:
+                    current_inventory_viz.df_compare_average_retail_prices(df)
+                else:
+                    st.warning("df_compare_average_retail_prices")
         elif file_type == "Top Customers report":
             cc1, cc2 = st.columns([1,1])
             with cc1:
+                columns = get_csv_columns(last_uploaded_file_path)
+                st.write(columns)
                 df = top_customers_viz.preprocess_data(pd.read_csv(last_uploaded_file_path))
-                top_customers_viz.customer_analysis_app(df)
-                top_customers_viz.interactive_bar_plot_app(df)
-
+                if "Name" in columns and " Total sales" in columns and "Territory" in columns and "Payment terms" in columns:
+                    top_customers_viz.customer_analysis_app(df)
+                else:
+                    st.warning("customer_analysis_app")
+                
+                if "Payment terms" in columns and "Category" in columns and "Count" in columns:
+                    top_customers_viz.interactive_bar_plot_app(df)
+                else:
+                    st.warning("interactive_bar_plot_app")
             with cc2:
-                top_customers_viz.create_non_zero_sales_grouped_plot(df)
-                top_customers_viz.interactive_group_distribution_app(df)
+                if "Total sales" in columns:
+                    top_customers_viz.create_non_zero_sales_grouped_plot(df)
+                else:
+                    st.warning("create_non_zero_sales_grouped_plot")
+                    
+                if "Group" in columns and "Billing city" in columns:
+                    top_customers_viz.interactive_group_distribution_app(df)
+                else:
+                    st.warning("interactive_group_distribution_app")
         elif file_type == "Customer Details report":
             cc1, cc2 = st.columns([1,1])
             with cc1:
+                columns = get_csv_columns(last_uploaded_file_path)
+                st.write(columns)
                 df = customer_details_viz.preprocess_data(pd.read_csv(last_uploaded_file_path))
-                customer_details_viz.plot_orders_and_sales_plotly(df)
-                customer_details_viz.bar_plot_sorted_with_percentages(df)
+                
+                if "Group" in columns and "Total orders" in columns and "Total sales" in columns:
+                    customer_details_viz.plot_orders_and_sales_plotly(df)
+                else:
+                    st.warning("plot_orders_and_sales_plotly")
+                    
+                if "Payment terms" in columns:
+                    customer_details_viz.bar_plot_sorted_with_percentages(df)
+                else:
+                    st.warning("bar_plot_sorted_with_percentages")
             with cc2:
-                customer_details_viz.create_interactive_non_zero_sales_plot(df)
-                customer_details_viz.create_interactive_average_sales_heatmap(df)
+                if "Total sales" in columns:
+                    customer_details_viz.create_interactive_non_zero_sales_plot(df)
+                else:
+                    st.warning("create_interactive_non_zero_sales_plot")
+                    
+                if "Total sales" in columns and "Group" in columns and "Billing state" in columns:
+                    customer_details_viz.create_interactive_average_sales_heatmap(df)
+                else:
+                    st.warning("create_interactive_average_sales_heatmap")
 
         else:
             df = customer_details_viz.preprocess_data(pd.read_csv(last_uploaded_file_path))
