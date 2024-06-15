@@ -82,7 +82,7 @@ async def upload_file(file: UploadFile = File(...)):
         if file_ext not in [".csv", ".xlsx"]:
             raise HTTPException(status_code=400, detail="Unsupported file type")
         
-        file_path = os.path.join(UPLOAD_DIR, f"third_party_sales_summary{file_ext}")
+        file_path = os.path.join(UPLOAD_DIR, f"temp_file{file_ext}")
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         

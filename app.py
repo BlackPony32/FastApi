@@ -140,7 +140,6 @@ async def main_viz():
 
             with cc1:
                 columns = get_csv_columns(last_uploaded_file_path)
-                st.write(columns)
                 third_party_sales_viz.preprocess_data(pd.read_csv(last_uploaded_file_path))
 
                 if "Product name" in columns and "Grand total" in columns:
@@ -179,7 +178,6 @@ async def main_viz():
 
             with cc1:
                 columns = get_csv_columns(last_uploaded_file_path)
-                st.write(columns)
                 #df = order_sales_summary_viz.preprocess_data(pd.read_csv(last_uploaded_file_path))
                 
                 if "Customer" in columns and "Product name" in columns and "Created at" in columns:
@@ -222,10 +220,9 @@ async def main_viz():
 
             with cc1:
                 columns = get_csv_columns(last_uploaded_file_path)
-                st.write(columns)
                 df = best_sellers_viz.preprocess_data(pd.read_csv(last_uploaded_file_path))
                 
-                if "Available cases (QTY)" in columns and "Product name" in columns and "QTY" in columns and "Delivery status"in columns:
+                if "Available cases (QTY)" in columns and "Product name" in columns:
                     best_sellers_viz.create_available_cases_plot(df)
                 else:
                     st.warning("create_available_cases_plot")
@@ -247,14 +244,12 @@ async def main_viz():
                 if "Total revenue" in columns and "Product name" in columns:
                     best_sellers_viz.create_revenue_vs_profit_plot(df)
                 else:
-                    st.warning("create_revenue_vs_profit_plot")
-                    
+                    st.warning("create_revenue_vs_profit_plot")                    
         elif file_type == "Representative Details report":
             cc1, cc2 = st.columns([1,1])
 
             with cc1:
                 columns = get_csv_columns(last_uploaded_file_path)
-                st.write(columns)
                 df = reps_details_viz.preprocess_data(pd.read_csv(last_uploaded_file_path))
                 
                 if "Total working hours" in columns and "Total visits" in columns and "Assigned customers" in columns and "Role"in columns:
@@ -287,7 +282,6 @@ async def main_viz():
 
             with cc1:
                 columns = get_csv_columns(last_uploaded_file_path)
-                st.write(columns)
                 df = reps_summary_viz.preprocess_data(pd.read_csv(last_uploaded_file_path))
                 
                 if "Orders" in columns and "Total revenue" in columns and "Cases sold" in columns:
@@ -300,7 +294,7 @@ async def main_viz():
                 else:
                     st.warning("plot_visits_and_travel_distance_by_name")
                     
-                if "Date" in columns and "Day of Week" in columns:
+                if "Date" in columns:
                     reps_summary_viz.plot_cases_sold_by_day_of_week(df)
                 else:
                     st.warning("plot_cases_sold_by_day_of_week")
@@ -331,7 +325,6 @@ async def main_viz():
 
             with cc1:
                 columns = get_csv_columns(last_uploaded_file_path)
-                st.write(columns)
                 df = skus_not_ordered_viz.preprocess_data(pd.read_csv(last_uploaded_file_path))
                 
                 if "Category name" in columns:
@@ -349,12 +342,12 @@ async def main_viz():
                 else:
                     st.warning("price_vs_available_cases_app")
             with cc2:
-                if "Available cases (QTY)" in columns and "Retail price" in columns and "Wholesale price" in columns and "Category name" in columns and "Profit Margin" in columns:
+                if "Available cases (QTY)" in columns and "Retail price" in columns and "Wholesale price" in columns and "Category name" in columns:
                     skus_not_ordered_viz.create_wholesale_vs_retail_price_scatter(df)
                 else:
                     st.warning("create_wholesale_vs_retail_price_scatter")
                     
-                if "Category name" in columns and "Retail price" in columns and "Price Range" in columns:
+                if "Category name" in columns and "Retail price" in columns:
                     skus_not_ordered_viz.df_unordered_products_per_category_and_price_range(df)
                 else:
                     st.warning("df_unordered_products_per_category_and_price_range")
@@ -363,7 +356,6 @@ async def main_viz():
 
             with cc1:
                 columns = get_csv_columns(last_uploaded_file_path)
-                st.write(columns)
                 df = low_stock_inventory_viz.preprocess_data(pd.read_csv(last_uploaded_file_path))
                 
                 if "Category name" in columns and "Product name" in columns and "Available cases (QTY)" in columns and "Wholesale price" in columns:
@@ -371,7 +363,7 @@ async def main_viz():
                 else:
                     st.warning("low_stock_analysis_app")
                     
-                if "Retail price" in columns and "Wholesale price" in columns and "Product name" in columns and "Profit Margin" in columns:
+                if "Retail price" in columns and "Wholesale price" in columns and "Product name" in columns:
                     low_stock_inventory_viz.create_profit_margin_analysis_plot(df)
                 else:
                     st.warning("create_profit_margin_analysis_plot")
@@ -395,10 +387,9 @@ async def main_viz():
 
             with cc1:
                 columns = get_csv_columns(last_uploaded_file_path)
-                st.write(columns)
                 df = current_inventory_viz.preprocess_data(pd.read_csv(last_uploaded_file_path))
                 
-                if "Available cases (QTY)" in columns and "Wholesale price" in columns and " Category name" in columns:
+                if "Available cases (QTY)" in columns and "Wholesale price" in columns and "Category name" in columns:
                     current_inventory_viz.df_analyze_inventory_value_by_category(df)
                 else:
                     st.warning("df_analyze_inventory_value_by_category")
@@ -426,14 +417,13 @@ async def main_viz():
             cc1, cc2 = st.columns([1,1])
             with cc1:
                 columns = get_csv_columns(last_uploaded_file_path)
-                st.write(columns)
                 df = top_customers_viz.preprocess_data(pd.read_csv(last_uploaded_file_path))
-                if "Name" in columns and " Total sales" in columns and "Territory" in columns and "Payment terms" in columns:
+                if "Name" in columns and "Total sales" in columns and "Territory" in columns and "Payment terms" in columns:
                     top_customers_viz.customer_analysis_app(df)
                 else:
                     st.warning("customer_analysis_app")
                 
-                if "Payment terms" in columns and "Category" in columns and "Count" in columns:
+                if "Payment terms" in columns:
                     top_customers_viz.interactive_bar_plot_app(df)
                 else:
                     st.warning("interactive_bar_plot_app")
@@ -451,7 +441,6 @@ async def main_viz():
             cc1, cc2 = st.columns([1,1])
             with cc1:
                 columns = get_csv_columns(last_uploaded_file_path)
-                st.write(columns)
                 df = customer_details_viz.preprocess_data(pd.read_csv(last_uploaded_file_path))
                 
                 if "Group" in columns and "Total orders" in columns and "Total sales" in columns:
