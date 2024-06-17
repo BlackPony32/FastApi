@@ -25,6 +25,7 @@ from langchain.tools import tool
 from app import main_viz
 from side_func import extract_filename, get_file_name
 
+
 app = FastAPI()
 load_dotenv()
 
