@@ -155,7 +155,7 @@ async def main_viz():
                 if "Delivery status" in columns and "Product name" in columns and "QTY" in columns and "Grand total" in columns:
                     third_party_sales_viz.visualize_combined_analysis(df)
                 else:
-                    st.warning("There is no Customer or Product name or Delivery status or Grand total, so visualizing can not be ready")
+                    st.warning("There is no Delivery status or Product name or Quantity or Grand total, so visualizing can not be ready")
                 
             with cc2:
                 columns = get_csv_columns(last_uploaded_file_path)
@@ -183,34 +183,35 @@ async def main_viz():
                 if "Customer" in columns and "Product name" in columns and "Created at" in columns:
                     order_sales_summary_viz.visualize_sales_trends(df)
                 else:
-                    st.warning("visualize_sales_trends")
+                    st.warning("There is no Customer or Product name or Created at columns, so visualizing can not be ready")
                 
                 if "Product name" in columns and "Grand total" in columns:
                     order_sales_summary_viz.visualize_product_analysis(df)
                 else:
-                    st.warning("visualize_product_analysis")
+                    st.warning("There is no Product name or Grand total columns, so visualizing can not be ready")
                 
                 if "Discount type" in columns and "Total invoice discount" in columns and "Customer" in columns:
                     order_sales_summary_viz.visualize_discount_analysis(df)
                 else:
-                    st.warning("visualize_discount_analysis")
-            
+                    st.warning("There is no Discount type or Total invoice discount or Customer columns, so visualizing can not be ready")
+                
             with cc2:
                 # bar_chart()
                 if "Delivery status" in columns and "Delivery methods" in columns:
                     order_sales_summary_viz.visualize_delivery_analysis(df)
                 else:
-                    st.warning("visualize_sales_trends")
+                    st.warning("There is no Delivery status or Delivery methods columns, so visualizing can not be ready")
                 
                 if "Payment status" in columns:
                     order_sales_summary_viz.visualize_payment_analysis(df)
                 else:
-                    st.warning("visualize_sales_trends")
+                    st.warning("There is no Payment status column, so visualizing can not be ready")
                 
                 if "Product name" in columns and "Grand total" in columns and "QTY" in columns and "Delivery status"in columns:
                     order_sales_summary_viz.visualize_combined_analysis(df)
                 else:
-                    st.warning("visualize_sales_trends")
+                    st.warning("There is no Grand total or Product name or Quantity or Delivery status columns, so visualizing can not be ready")
+                
                 # line_chart_plotly()
             # todo check map data  (addresses or coordinates)
             #map_features()
@@ -225,26 +226,29 @@ async def main_viz():
                 if "Available cases (QTY)" in columns and "Product name" in columns:
                     best_sellers_viz.create_available_cases_plot(df)
                 else:
-                    st.warning("create_available_cases_plot")
+                    st.warning("There is no Product name or Available cases (QTY) columns, so visualizing can not be ready")
+                
                 if "Product name" in columns and "Total revenue" in columns and "Cases sold" in columns:
                     best_sellers_viz.product_analysis_app(df)
                 else:
-                    st.warning("product_analysis_app")
+                    st.warning("There is no Total revenue or Product name or Cases sold columns, so visualizing can not be ready")
+                
                 if "Cases sold" in columns and "Total revenue" in columns:
                     best_sellers_viz.create_cases_revenue_relationship_plot(df)
                 else:
-                    st.warning("create_cases_revenue_relationship_plot")
+                    st.warning("There is no Total revenue or Cases sold columns, so visualizing can not be ready")
+                
             with cc2:
                 # bar_chart()
                 if "Category name" in columns and "Wholesale price" in columns and "Retail price" in columns:
                     best_sellers_viz.price_comparison_app(df)
                 else:
-                    st.warning("price_comparison_app")
+                    st.warning("There is no Category name or Wholesale price or Retail price columns, so visualizing can not be ready")
                 
                 if "Total revenue" in columns and "Product name" in columns:
                     best_sellers_viz.create_revenue_vs_profit_plot(df)
                 else:
-                    st.warning("create_revenue_vs_profit_plot")                    
+                    st.warning("There is no Total revenue or Product name columns, so visualizing can not be ready")
         elif file_type == "Representative Details report":
             cc1, cc2 = st.columns([1,1])
 
@@ -255,28 +259,33 @@ async def main_viz():
                 if "Total working hours" in columns and "Total visits" in columns and "Assigned customers" in columns and "Role"in columns:
                     reps_details_viz.analyze_sales_rep_efficiency(df)
                 else:
-                    st.warning("analyze_sales_rep_efficiency")
+                    st.warning("There is no Total working hours or Total visits or Assigned customers or Role columns, so visualizing can not be ready")
+                
                 if "Role" in columns and "Active customers" in columns and "Total visits" in columns:
                     reps_details_viz.plot_active_customers_vs_visits(df)
                 else:
-                    st.warning("plot_active_customers_vs_visits")
+                    st.warning("There is no Role or Active customers or Total visits columns, so visualizing can not be ready")
+                
                 if "Total travel distance" in columns and "Total visits" in columns and "Role" in columns:
                     reps_details_viz.plot_travel_efficiency_line(df)
                 else:
-                    st.warning("plot_travel_efficiency_line")
+                    st.warning("There is no Total travel distance or Total visits or Role columns, so visualizing can not be ready")
+                
             with cc2:
                 if "Total working hours" in columns and "Total break hours" in columns and "Total travel distance" in columns:
                     reps_details_viz.analyze_work_hours_and_distance(df)
                 else:
-                    st.warning("analyze_work_hours_and_distance")
+                    st.warning("There is no Total working hours or Total break hours or Total travel distance columns, so visualizing can not be ready")
+                
                 if "Role" in columns and "Total visits" in columns and "Total photos" in columns:
                     reps_details_viz.plot_visits_vs_photos_separate(df)
                 else:
-                    st.warning("plot_visits_vs_photos_separate")
+                    st.warning("There is no Role or Total visits or Total photos columns, so visualizing can not be ready")
+                
                 if "Role" in columns and "Assigned customers" in columns:
                     reps_details_viz.analyze_customer_distribution(df)
                 else:
-                    st.warning("analyze_customer_distribution")
+                    st.warning("There is no Role or Assigned customers columns, so visualizing can not be ready")
         elif file_type == "Reps Summary report":
             cc1, cc2 = st.columns([1,1])
 
@@ -287,39 +296,43 @@ async def main_viz():
                 if "Orders" in columns and "Total revenue" in columns and "Cases sold" in columns:
                     reps_summary_viz.plot_sales_relationships(df)
                 else:
-                    st.warning("plot_sales_relationships")
-                    
+                    st.warning("There is no Orders or Total revenue or Cases sold columns, so visualizing can not be ready")
+                
                 if "Date" in columns and "Role" in columns and "Total revenue" in columns:
                     reps_summary_viz.plot_revenue_by_month_and_role(df)
                 else:
-                    st.warning("plot_visits_and_travel_distance_by_name")
-                    
+                    st.warning("There is no Date or Role or Total revenue columns, so visualizing can not be ready")
+                
                 if "Date" in columns:
                     reps_summary_viz.plot_cases_sold_by_day_of_week(df)
                 else:
-                    st.warning("plot_cases_sold_by_day_of_week")
-                    
+                    st.warning("There is no Date column, so visualizing can not be ready")
+                
                 if "Date" in columns and "Total revenue" in columns and "Role" in columns:
                     reps_summary_viz.plot_revenue_trend_by_month_and_role(df)
                 else:
-                    st.warning("plot_revenue_trend_by_month_and_role")
+                    st.warning("There is no Date or Total revenue or Role columns, so visualizing can not be ready")
+                
             with cc2:
                 if "Name" in columns and "Visits" in columns and "Travel distance" in columns:
                     reps_summary_viz.plot_visits_and_travel_distance_by_name(df)
                 else:
-                    st.warning("plot_visits_and_travel_distance_by_name")
+                    st.warning("There is no Name or Visits or Travel distance columns, so visualizing can not be ready")
+                
                 if "Visits" in columns and "Orders" in columns:
                     reps_summary_viz.plot_orders_vs_visits_with_regression(df)
                 else:
-                    st.warning("plot_orders_vs_visits_with_regression")
+                    st.warning("There is no Visits or Orders columns, so visualizing can not be ready")
+                
                 if "Role" in columns and "Visits" in columns and "Orders" in columns and "Cases sold" in columns:
                     reps_summary_viz.plot_multiple_metrics_by_role(df)
                 else:
-                    st.warning("plot_multiple_metrics_by_role")
+                    st.warning("There is no Role or Visits or Orders or Cases sold columns, so visualizing can not be ready")
+                
                 if "Cases sold" in columns and "Total revenue" in columns and "Visits" in columns and "Travel distance" in columns:
                     reps_summary_viz.plot_revenue_vs_cases_sold_with_size_and_color(df)
                 else:
-                    st.warning("plot_revenue_vs_cases_sold_with_size_and_color")
+                    st.warning("There is no Cases sold or Total revenue or Visits or Travel distance columns, so visualizing can not be ready")
         elif file_type == "SKU's Not Ordered report":
             cc1, cc2 = st.columns([1,1])
 
@@ -330,27 +343,28 @@ async def main_viz():
                 if "Category name" in columns:
                     skus_not_ordered_viz.create_unordered_products_by_category_plot(df)
                 else:
-                    st.warning("create_unordered_products_by_category_plot")
-                    
+                    st.warning("There is no Category name column, so visualizing can not be ready")
+                
                 if "Available cases (QTY)" in columns:
                     skus_not_ordered_viz.create_available_cases_distribution_plot(df)
                 else:
-                    st.warning("create_available_cases_distribution_plot")
-                    
+                    st.warning("There is no Available cases (QTY) column, so visualizing can not be ready")
+                
                 if "Category name" in columns and "Retail price" in columns and "Available cases (QTY)" in columns:
                     skus_not_ordered_viz.price_vs_available_cases_app(df)
                 else:
-                    st.warning("price_vs_available_cases_app")
+                    st.warning("There is no Category name or Retail price or Available cases (QTY) columns, so visualizing can not be ready")
+                
             with cc2:
                 if "Available cases (QTY)" in columns and "Retail price" in columns and "Wholesale price" in columns and "Category name" in columns:
                     skus_not_ordered_viz.create_wholesale_vs_retail_price_scatter(df)
                 else:
-                    st.warning("create_wholesale_vs_retail_price_scatter")
-                    
+                    st.warning("There is no Available cases (QTY) or Retail price or Wholesale price columns, so visualizing can not be ready")
+                
                 if "Category name" in columns and "Retail price" in columns:
                     skus_not_ordered_viz.df_unordered_products_per_category_and_price_range(df)
                 else:
-                    st.warning("df_unordered_products_per_category_and_price_range")
+                    st.warning("There is no Category name or Retail price columns, so visualizing can not be ready")
         elif file_type == "Low Stock Inventory report":
             cc1, cc2 = st.columns([1,1])
 
@@ -361,27 +375,28 @@ async def main_viz():
                 if "Category name" in columns and "Product name" in columns and "Available cases (QTY)" in columns and "Wholesale price" in columns:
                     low_stock_inventory_viz.low_stock_analysis_app(df)
                 else:
-                    st.warning("low_stock_analysis_app")
-                    
+                    st.warning("There is no Available cases (QTY) or Category name or Product name columns, so visualizing can not be ready")
+                
                 if "Retail price" in columns and "Wholesale price" in columns and "Product name" in columns:
                     low_stock_inventory_viz.create_profit_margin_analysis_plot(df)
                 else:
-                    st.warning("create_profit_margin_analysis_plot")
-                    
+                    st.warning("There is no Product name or Retail price or Wholesale price columns, so visualizing can not be ready")
+                
                 if "Manufacturer name" in columns and "Product name" in columns:
                     low_stock_inventory_viz.create_low_stock_by_manufacturer_bar_plot(df)
                 else:
-                    st.warning("create_low_stock_by_manufacturer_bar_plot")
+                    st.warning("There is no Manufacturer name or Product name columns, so visualizing can not be ready")
+                
             with cc2:
                 if "Wholesale price" in columns and "Available cases (QTY)" in columns:
                     low_stock_inventory_viz.create_interactive_price_vs_quantity_plot(df)
                 else:
-                    st.warning("create_interactive_price_vs_quantity_plot")
+                    st.warning("There is no Available cases (QTY) or Wholesale price columns, so visualizing can not be ready")
                 
                 if "Retail price" in columns and "Available cases (QTY)" in columns and "Product name" in columns:
                     low_stock_inventory_viz.create_quantity_price_ratio_plot(df)
                 else:
-                    st.warning("create_quantity_price_ratio_plot")
+                    st.warning("There is no Available cases (QTY) or Retail price columns, so visualizing can not be ready")
         elif file_type == "Current Inventory report":
             cc1, cc2 = st.columns([1,1])
 
@@ -392,27 +407,28 @@ async def main_viz():
                 if "Available cases (QTY)" in columns and "Wholesale price" in columns and "Category name" in columns:
                     current_inventory_viz.df_analyze_inventory_value_by_category(df)
                 else:
-                    st.warning("df_analyze_inventory_value_by_category")
-                    
+                    st.warning("There is no Available cases (QTY) or Wholesale price columns, so visualizing can not be ready")
+                
                 if "Available cases (QTY)" in columns and "Retail price" in columns and "Category name" in columns and "Wholesale price" in columns:
                     current_inventory_viz.df_analyze_quantity_vs_retail_price(df)
                 else:
-                    st.warning("df_analyze_quantity_vs_retail_price")
-                    
+                    st.warning("There is no Available cases (QTY) or Retail price or Category name columns, so visualizing can not be ready")
+                
                 if "Available cases (QTY)" in columns and "Wholesale price" in columns and "Manufacturer name" in columns:
                     current_inventory_viz.df_analyze_inventory_value_by_manufacturer(df)
                 else:
-                    st.warning("df_analyze_inventory_value_by_manufacturer")
+                    st.warning("There is no Available cases (QTY) or Manufacturer name or Wholesale price columns, so visualizing can not be ready")
+                
             with cc2:
                 if "Wholesale price" in columns and "Available cases (QTY)" in columns and "Product name" in columns:
                     current_inventory_viz.df_analyze_inventory_value_per_unit(df)
                 else:
-                    st.warning("df_analyze_inventory_value_per_unit")
-                    
+                    st.warning("There is no Product name or Available cases (QTY) or Wholesale price columns, so visualizing can not be ready")
+                
                 if "Retail price" in columns and "Category name" in columns:
                     current_inventory_viz.df_compare_average_retail_prices(df)
                 else:
-                    st.warning("df_compare_average_retail_prices")
+                    st.warning("There is no Category name or Retail price columns, so visualizing can not be ready")
         elif file_type == "Top Customers report":
             cc1, cc2 = st.columns([1,1])
             with cc1:
@@ -421,22 +437,23 @@ async def main_viz():
                 if "Name" in columns and "Total sales" in columns and "Territory" in columns and "Payment terms" in columns:
                     top_customers_viz.customer_analysis_app(df)
                 else:
-                    st.warning("customer_analysis_app")
+                    st.warning("There is no Name or Total sales or Territory or Payment terms columns, so visualizing can not be ready")
                 
                 if "Payment terms" in columns:
                     top_customers_viz.interactive_bar_plot_app(df)
                 else:
-                    st.warning("interactive_bar_plot_app")
+                    st.warning("There is no Payment terms column, so visualizing can not be ready")
+                
             with cc2:
                 if "Total sales" in columns:
                     top_customers_viz.create_non_zero_sales_grouped_plot(df)
                 else:
-                    st.warning("create_non_zero_sales_grouped_plot")
-                    
+                    st.warning("There is no Total sales column, so visualizing can not be ready")
+                
                 if "Group" in columns and "Billing city" in columns:
                     top_customers_viz.interactive_group_distribution_app(df)
                 else:
-                    st.warning("interactive_group_distribution_app")
+                    st.warning("There is no Group or Billing city columns, so visualizing can not be ready")
         elif file_type == "Customer Details report":
             cc1, cc2 = st.columns([1,1])
             with cc1:
@@ -446,22 +463,25 @@ async def main_viz():
                 if "Group" in columns and "Total orders" in columns and "Total sales" in columns:
                     customer_details_viz.plot_orders_and_sales_plotly(df)
                 else:
-                    st.warning("plot_orders_and_sales_plotly")
-                    
+                    st.warning("There is no Group or Total orders or Total sales columns, so visualizing can not be ready")
+                
                 if "Payment terms" in columns:
                     customer_details_viz.bar_plot_sorted_with_percentages(df)
                 else:
-                    st.warning("bar_plot_sorted_with_percentages")
+                    st.warning("There is no Payment terms column, so visualizing can not be ready")
+                
             with cc2:
                 if "Total sales" in columns:
                     customer_details_viz.create_interactive_non_zero_sales_plot(df)
                 else:
-                    st.warning("create_interactive_non_zero_sales_plot")
+                    st.warning("There is no Total sales column, so visualizing can not be ready")
+                
                     
                 if "Total sales" in columns and "Group" in columns and "Billing state" in columns:
                     customer_details_viz.create_interactive_average_sales_heatmap(df)
                 else:
-                    st.warning("create_interactive_average_sales_heatmap")
+                    st.warning("There is no Total sales or Group or Billing state columns, so visualizing can not be ready")
+
 
         else:
             df = customer_details_viz.preprocess_data(pd.read_csv(last_uploaded_file_path))
