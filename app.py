@@ -152,7 +152,7 @@ async def main_viz():
                 else:
                     st.warning("There is no Customer or Product name or Quantity or Grand total, so visualizing can not be ready")
                 
-                if "Delivery status" in columns and "Product name" in columns and "QTY" in columns and "Grand total" in columns:
+                if "Product name" in columns and "QTY" in columns and "Grand total" in columns:
                     third_party_sales_viz.visualize_combined_analysis(df)
                 else:
                     st.warning("There is no Delivery status or Product name or Quantity or Grand total, so visualizing can not be ready")

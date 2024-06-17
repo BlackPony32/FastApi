@@ -77,35 +77,25 @@ This chart displays the number of orders for each product, indicating their popu
 #Sales amount for each client (top 10)
 def visualize_sales_trends(data, customer_col='Customer', product_col='Product name',
                            grand_total_col='Grand total', qty_col='QTY'):
-    tab1, tab2 = st.tabs(["Top Customers", "Monthly Trend"])
+    top_customers = data.groupby(customer_col)[grand_total_col].sum().nlargest(10)
+    fig = px.bar(top_customers, 
+                  x=top_customers.index, 
+                  y=top_customers.values,
+                  title="Top 10 Customers by Sales Amount", 
+                  color=top_customers.values,
+                  color_continuous_scale='Bluyl')
+    fig.update_layout(xaxis_tickangle=45, 
+                      yaxis_title="Sales Amount", 
+                      xaxis_title="Customer",
+                      yaxis_autorange="reversed") # Reverse the y-axis
+    st.plotly_chart(fig)
+    st.markdown("""
+    ## Top Customer Insights
+    This chart highlights your top 10 customers by sales revenue. Prioritize these key relationships to drive future sales and consider loyalty programs to encourage repeat business.
+    """)
+        
 
-    with tab1:
-        top_customers = data.groupby(customer_col)[grand_total_col].sum().nlargest(10)
-        fig = px.bar(top_customers, 
-                      x=top_customers.index, 
-                      y=top_customers.values,
-                      title="Top 10 Customers by Sales Amount", 
-                      color=top_customers.values,
-                      color_continuous_scale='Bluyl')
-        fig.update_layout(xaxis_tickangle=45, 
-                          yaxis_title="Sales Amount", 
-                          xaxis_title="Customer",
-                          yaxis_autorange="reversed") # Reverse the y-axis
-        st.plotly_chart(fig)
-
-        st.markdown("""
-        ## Top Customer Insights
-
-        This chart highlights your top 10 customers by sales revenue. Prioritize these key relationships to drive future sales and consider loyalty programs to encourage repeat business.
-        """)
-
-    # with tab2:
-    #     st.subheader("Monthly Sales Trend")
-    #     monthly_sales = data.groupby(pd.Grouper(key='Created at', freq='M'))[grand_total_col].sum()
-    #     fig = px.line(monthly_sales, x=monthly_sales.index, y=monthly_sales.values,
-    #                  title="Monthly Sales Trend", markers=True)
-    #     fig.update_layout(xaxis_title="Month", yaxis_title="Sales Amount")
-    #     plotly_preproc(fig)
+    
 
 #Analysis of discounts
 def visualize_discount_analysis(data, discount_type_col='Discount type', 

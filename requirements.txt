@@ -20,4 +20,5 @@ statsmodels
 pandasai
 qdrant_client
 chromadb
+lida
 tenacity==8.3.0
