@@ -520,15 +520,16 @@ def test_plot_maker(df, text):
 
     visualization_libraries = "plotly"
     i = 0
-    #cc1, cc2 = st.columns([2,1])
+
     goals = [text]
+
     textgen_config = TextGenerationConfig(n=1, 
-                                      temperature=0.1, model="gpt-3.5-turbo", 
+                                      temperature=0.1, model="gpt-4o", 
                                       use_cache=True)
-    #with cc1:
+
     summary = lida.summarize(df, 
                 summary_method="default", textgen_config=textgen_config) 
-    textgen_config = TextGenerationConfig(n=1, temperature=0.1, model="gpt-3.5-turbo", use_cache=True)
+    textgen_config = TextGenerationConfig(n=1, temperature=0.1, model="gpt-4o", use_cache=True)
     visualizations = lida.visualize(summary=summary, goal=goals[0], textgen_config=textgen_config, library=visualization_libraries)
     if visualizations:  # Check if the visualizations list is not empty
         selected_viz = visualizations[0]
@@ -537,8 +538,7 @@ def test_plot_maker(df, text):
         st.plotly_chart(exec_globals['chart'])
     else:
         st.warning("No visualizations were generated for this query.")    
-    #with cc2:
-    #    st.success("Visualization is ready")
+
 
 
 
