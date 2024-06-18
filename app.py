@@ -523,13 +523,13 @@ def test_plot_maker(df, text):
     #cc1, cc2 = st.columns([2,1])
     goals = [text]
     textgen_config = TextGenerationConfig(n=1, 
-                                      temperature=0.1, model="gpt-3.5-turbo-0301", 
+                                      temperature=0.1, model="gpt-3.5-turbo", 
                                       use_cache=True)
     #with cc1:
     summary = lida.summarize(df, 
                 summary_method="default", textgen_config=textgen_config) 
-    textgen_config = TextGenerationConfig(n=1, temperature=0.1, model="gpt-3.5-turbo-0301", use_cache=True)
-    visualizations = lida.visualize(summary=summary, goal=goals[0],textgen_config=textgen_config,library=visualization_libraries)
+    textgen_config = TextGenerationConfig(n=1, temperature=0.1, model="gpt-3.5-turbo", use_cache=True)
+    visualizations = lida.visualize(summary=summary, goal=goals[0], textgen_config=textgen_config, library=visualization_libraries)
     if visualizations:  # Check if the visualizations list is not empty
         selected_viz = visualizations[0]
         exec_globals = {'data': df}

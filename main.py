@@ -80,7 +80,7 @@ async def upload_many_files(files: List[UploadFile] = File(...)):
     return JSONResponse(content={
         "message": "Files uploaded successfully",
         "file_paths": last_uploaded_file_paths,
-        "streamlit_url": "http://localhost:8501"
+        "streamlit_url": "http://51.20.119.227:8501/"
     })
 
 @app.post("/upload_file/")
@@ -138,7 +138,7 @@ async def link_file_and_name(request: DownloadRequest):
 
         csv_file_path = convert_excel_to_csv(excel_file_path)
 
-        return {"message": "File downloaded and converted successfully", "streamlit_url": "http://13.48.178.51:8501/"}
+        return {"message": "File downloaded and converted successfully", "streamlit_url": "http://51.20.119.227:8501/"}
     except requests.RequestException as e:
         logging.error(f"RequestException: {str(e)}")
         raise HTTPException(status_code=400, detail=f"Error downloading file: {e}")
@@ -169,7 +169,7 @@ async def download_file(request: DownloadRequest):
 
         csv_file_path = convert_excel_to_csv(excel_file_path)
 
-        return {"message": "File downloaded and converted successfully", "streamlit_url": "http://13.48.178.51:8501/"}
+        return {"message": "File downloaded and converted successfully", "streamlit_url": "http://51.20.119.227:8501/"}
     except requests.RequestException as e:
         logging.error(f"RequestException: {str(e)}")
         raise HTTPException(status_code=400, detail=f"Error downloading file: {e}")
