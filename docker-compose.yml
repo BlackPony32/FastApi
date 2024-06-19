@@ -12,14 +12,3 @@ services:
     env_file:
       - .env
     restart: always  # Automatically restart the container if it stops
-
-  streamlit-app:
-    build: .
-    command: streamlit run app.py
-    ports:
-      - "8501:8501"
-    volumes:
-      - .:/app
-    env_file:
-      - .env
-    restart: always
