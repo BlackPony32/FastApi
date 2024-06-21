@@ -119,7 +119,23 @@ async def get_link_file_and_name(
 ):
     return JSONResponse(content={"link": link, "file_name": file_name})
 
- 
+@app.post("/link_file_and_name2/")
+async def link_file_and_name(request: DownloadRequest):
+    global url
+    global file_name
+    url = request.url
+    file_name = request.filename
+    return JSONResponse(content={"url": url, "file_name": file_name})
+
+@app.get("/get_file_info/")
+async def get_file_info():
+    if url and file_name:
+        return JSONResponse(content={"url": url, "file_name": file_name})
+    else:
+        return JSONResponse(content={"error": "No data available"}, status_code=404)
+
+
+
 @app.post("/link_file_and_name/")
 async def link_file_and_name(request: DownloadRequest):
     global url
@@ -171,13 +187,6 @@ async def link_file_and_name(request: DownloadRequest):
         logging.error(f"Exception: {str(e)}")
         logging.error(traceback.format_exc())  # Log traceback
         raise HTTPException(status_code=500, detail=f"Internal server error: {e}")
-
-@app.get("/get_file_info/")
-async def get_file_info():
-    if url and file_name:
-        return JSONResponse(content={"url": url, "file_name": file_name})
-    else:
-        return JSONResponse(content={"error": "No data available"}, status_code=404)
 
 @app.post("/download")
 async def download_file(request: DownloadRequest):
