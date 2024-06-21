@@ -1,5 +1,7 @@
 from fastapi import FastAPI, HTTPException, File, UploadFile
 from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import RedirectResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, List
 import os
@@ -10,16 +12,24 @@ import logging
 
 from side_func import extract_filename, get_file_name
 # Import additional necessary modules
+import traceback
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from dotenv import load_dotenv
-
+from fastapi import FastAPI, Query
 # Load environment variables
 load_dotenv()
 
 # FastAPI app initialization
 app = FastAPI()
-
+# Allow all origins to access the API (change it to specific origins in production)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 # Constants for upload directories
 UPLOAD_DIR = "uploads"
 UPLOAD_DIR_MANY = "uploads_many"
@@ -36,6 +46,8 @@ class ChatRequest(BaseModel):
 class DownloadRequest(BaseModel):
     url: str
     filename: Optional[str] = None
+url = None
+file_name = None
 
 # Utility functions
 def cleanup_uploads_folder(upload_dir: str):
@@ -100,6 +112,30 @@ async def upload_file(file: UploadFile = File(...)):
 
     return JSONResponse(content={"message": "File uploaded successfully", "file_path": file_path})
 
+@app.get("/link_file_and_name1/")
+async def get_link_file_and_name(
+    link: str = Query(...),
+    file_name: str = Query(...)
+):
+    return JSONResponse(content={"link": link, "file_name": file_name})
+
+@app.post("/link_file_and_name2/")
+async def link_file_and_name(request: DownloadRequest):
+    global url
+    global file_name
+    url = request.url
+    file_name = request.filename
+    return JSONResponse(content={"url": url, "file_name": file_name})
+
+@app.get("/get_file_info/")
+async def get_file_info():
+    if url and file_name:
+        return JSONResponse(content={"url": url, "file_name": file_name})
+    else:
+        return JSONResponse(content={"error": "No data available"}, status_code=404)
+
+
+
 @app.post("/link_file_and_name/")
 async def link_file_and_name(request: DownloadRequest):
     cleanup_uploads_folder(UPLOAD_DIR)
@@ -137,13 +173,17 @@ async def link_file_and_name(request: DownloadRequest):
                 file.write(chunk)
 
         csv_file_path = convert_excel_to_csv(excel_file_path)
-
-        return {"message": "File downloaded and converted successfully", "streamlit_url": "https://streamlit-2y3qx63wua-uc.a.run.app/"}
+        streamlit_url = "https://streamlit-2y3qx63wua-uc.a.run.app/"
+        
+        #return RedirectResponse(url=streamlit_url)
+        return {"message": "File downloaded and converted successfully", "streamlit_url": streamlit_url}
     except requests.RequestException as e:
         logging.error(f"RequestException: {str(e)}")
+        logging.error(traceback.format_exc())  # Log traceback
         raise HTTPException(status_code=400, detail=f"Error downloading file: {e}")
     except Exception as e:
         logging.error(f"Exception: {str(e)}")
+        logging.error(traceback.format_exc())  # Log traceback
         raise HTTPException(status_code=500, detail=f"Internal server error: {e}")
 
 @app.post("/download")
